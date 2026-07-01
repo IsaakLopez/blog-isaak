@@ -3,53 +3,539 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Website de Empleados</title>
-    <!-- Compiled and minified CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-    <!-- Import Google Icon Font -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>Panel Principal · Financiera Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink-900: #10182A;
+            --ink-700: #24304A;
+            --paper-050: #EFF1EE;
+            --paper-100: #FFFFFF;
+            --brass-500: #A9812C;
+            --brass-100: #F1E7CE;
+            --forest-600: #2E5C4B;
+            --forest-100: #E1EAE5;
+            --rust-500: #A3492F;
+            --rust-100: #F1E0DA;
+            --slate-500: #5B6472;
+            --slate-300: #8B93A0;
+            --line-200: #DCDFE0;
+            --line-100: #E9EBEA;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--paper-050);
+            color: var(--ink-900);
+            font-family: 'Inter', -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        main { flex: 1 0 auto; }
+
+        a { text-decoration: none; }
+
+        /* ---------- Header ---------- */
+
+        .topbar {
+            background: var(--ink-900);
+            border-bottom: 3px solid var(--brass-500);
+        }
+
+        .topbar-inner {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 76px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            color: #F5F3EE;
+        }
+
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            flex-shrink: 0;
+        }
+
+        .brand-name {
+            font-family: 'Fraunces', serif;
+            font-size: 1.35rem;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            color: #FFFFFF;
+        }
+
+        .brand-tag {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--brass-500);
+        }
+
+        .session-actions {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+
+        .session-user {
+            font-size: 0.82rem;
+            color: var(--slate-300);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .btn-logout {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: 1px solid rgba(245, 243, 238, 0.28);
+            color: #F5F3EE;
+            padding: 9px 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 500;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--brass-500);
+            background: rgba(169, 129, 44, 0.12);
+        }
+
+        .btn-logout svg { width: 15px; height: 15px; }
+
+        /* ---------- Shell ---------- */
+
+        .shell {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 40px 32px 64px;
+        }
+
+        /* ---------- Ledger strip (KPIs) ---------- */
+
+        .ledger {
+            background: var(--paper-100);
+            border: 1px solid var(--line-200);
+            border-radius: 4px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .ledger-item {
+            padding: 24px 28px;
+            border-left: 1px solid var(--line-100);
+        }
+
+        .ledger-item:first-child { border-left: none; }
+
+        .ledger-eyebrow {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--slate-500);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ledger-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--forest-600);
+        }
+
+        .ledger-dot.is-warn { background: var(--rust-500); }
+
+        .ledger-value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-variant-numeric: tabular-nums;
+            font-size: 1.55rem;
+            font-weight: 500;
+            color: var(--ink-900);
+            margin-top: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .ledger-caption {
+            font-size: 0.78rem;
+            color: var(--slate-500);
+            margin-top: 4px;
+        }
+
+        .ledger-value.is-warn { color: var(--rust-500); }
+        .ledger-value.is-status { font-family: 'Inter', sans-serif; font-weight: 600; color: var(--forest-600); }
+
+        /* ---------- Section heading ---------- */
+
+        .section-head {
+            margin-top: 56px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--line-200);
+            padding-bottom: 16px;
+        }
+
+        .section-eyebrow {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--brass-500);
+            margin: 0 0 6px;
+        }
+
+        .section-title {
+            font-family: 'Fraunces', serif;
+            font-size: 1.7rem;
+            font-weight: 500;
+            margin: 0;
+            color: var(--ink-900);
+        }
+
+        .section-count {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--slate-500);
+        }
+
+        /* ---------- Module grid ---------- */
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .module-card {
+            background: var(--paper-100);
+            border: 1px solid var(--line-200);
+            border-radius: 4px;
+            padding: 26px 24px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            position: relative;
+            border-left: 3px solid var(--forest-600);
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .module-card.is-locked {
+            border-left: 3px dashed var(--line-200);
+            background: repeating-linear-gradient(135deg, var(--paper-100) 0 12px, #F6F7F5 12px 24px);
+        }
+
+        .module-card.is-active:hover {
+            border-color: var(--brass-500);
+            border-left-color: var(--forest-600);
+            box-shadow: 0 4px 14px rgba(16, 24, 42, 0.06);
+        }
+
+        .module-icon {
+            width: 30px;
+            height: 30px;
+            color: var(--ink-900);
+        }
+
+        .module-card.is-locked .module-icon { color: var(--slate-300); }
+
+        .module-title {
+            font-family: 'Fraunces', serif;
+            font-size: 1.12rem;
+            font-weight: 500;
+            color: var(--ink-900);
+            margin: 0;
+        }
+
+        .module-card.is-locked .module-title { color: var(--slate-500); }
+
+        .module-desc {
+            font-size: 0.87rem;
+            line-height: 1.5;
+            color: var(--slate-500);
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .module-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 6px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line-100);
+        }
+
+        .module-status {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.66rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .module-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--forest-600); }
+        .module-status.is-locked-status { color: var(--slate-300); }
+        .module-status.is-locked-status .dot { background: var(--slate-300); }
+        .module-status.is-active-status { color: var(--forest-600); }
+
+        .module-link {
+            color: var(--ink-900);
+            font-size: 0.83rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .module-link svg { width: 13px; height: 13px; transition: transform 0.15s ease; }
+        .module-card.is-active:hover .module-link svg { transform: translateX(3px); }
+
+        .module-link.is-disabled {
+            color: var(--slate-300);
+            font-weight: 500;
+            cursor: default;
+        }
+
+        /* ---------- Footer ---------- */
+
+        .site-footer {
+            background: var(--ink-900);
+            padding: 22px 32px;
+            text-align: center;
+        }
+
+        .site-footer p {
+            margin: 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.02em;
+            color: var(--slate-300);
+        }
+
+        .site-footer a { color: var(--brass-500); }
+
+        /* ---------- Responsive ---------- */
+
+        @media (max-width: 900px) {
+            .ledger { grid-template-columns: repeat(2, 1fr); }
+            .ledger-item:nth-child(3) { border-left: none; }
+            .ledger-item:nth-child(2n) { border-left: 1px solid var(--line-100); }
+            .module-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 560px) {
+            .ledger { grid-template-columns: 1fr; }
+            .ledger-item { border-left: none !important; border-top: 1px solid var(--line-100); }
+            .ledger-item:first-child { border-top: none; }
+            .topbar-inner { padding: 0 18px; }
+            .shell { padding: 28px 18px 48px; }
+            .session-user { display: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { transition: none !important; }
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--brass-500);
+            outline-offset: 2px;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav class="blue darken-3">
-        <div class="nav-wrapper container">
-            <a href="#" class="brand-logo">Gestión de Empleados</a>
-            <ul id="nav-mobile" class="right hide-on-med-and-down">
-                <li><a href="/admin/">Panel de Administración</a></li>
-                <li><a href="{% url 'lista' %}">Lista de Empleados</a></li>
-            </ul>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="{% url 'home' %}" class="brand">
+                <svg class="brand-mark" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="1" y="1" width="32" height="32" rx="3" stroke="#A9812C" stroke-width="1.4"/>
+                    <path d="M8 24V13L17 8L26 13V24" stroke="#F5F3EE" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M12 24V16.5H22V24" stroke="#F5F3EE" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M17 16.5V24" stroke="#A9812C" stroke-width="1.4"/>
+                </svg>
+                <span>
+                    <span class="brand-name">Financiera Pro</span><br>
+                    <span class="brand-tag">Core Financiero</span>
+                </span>
+            </a>
+            <div class="session-actions">
+                <span class="session-user">SESIÓN: ADMIN</span>
+                <form action="{% url 'logout' %}" method="POST" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout">
+                        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 17H4.5A1.5 1.5 0 0 1 3 15.5v-11A1.5 1.5 0 0 1 4.5 3H8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                            <path d="M13 13.5 17 10l-4-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M17 10H7.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                        </svg>
+                        Cerrar sesión
+                    </button>
+                </form>
+            </div>
         </div>
-    </nav>
+    </header>
 
-    <!-- Main Content -->
-    <div class="container">
-        <div class="row">
-            <div class="col s12">
-                <div class="card blue-grey darken-1 hoverable">
-                    <div class="card-content white-text">
-                        <span class="card-title"><i class="material-icons left">business</i>Bienvenido al Sistema de Gestión</span>
-                        <p>Esta es la página principal (Home). Aquí puedes acceder al panel de administración para gestionar empleados, departamentos y más, o ver la lista de empleados.</p>
-                    </div>
-                    <div class="card-action center-align">
-                        <a href="/admin/" class="waves-effect waves-light btn blue"><i class="material-icons left">admin_panel_settings</i>Ir al Panel de Administración</a>
-                        <a href="{% url 'lista' %}" class="waves-effect waves-light btn teal"><i class="material-icons left">list</i>Ver Lista de Empleados</a>
-                    </div>
+    <main class="shell">
+
+        <!-- Ledger strip: hard financial data, tabular figures, no card shadows or icons — this is the signature moment of the page -->
+        <section class="ledger" aria-label="Resumen financiero">
+            <div class="ledger-item">
+                <div class="ledger-eyebrow">Cartera activa <span class="ledger-dot"></span></div>
+                <div class="ledger-value">L 2,450,800.00</div>
+                <div class="ledger-caption">Saldo total en préstamos vigentes</div>
+            </div>
+            <div class="ledger-item">
+                <div class="ledger-eyebrow">Clientes totales <span class="ledger-dot"></span></div>
+                <div class="ledger-value">1,248</div>
+                <div class="ledger-caption">Socios con cuenta activa</div>
+            </div>
+            <div class="ledger-item">
+                <div class="ledger-eyebrow">Índice de mora <span class="ledger-dot is-warn"></span></div>
+                <div class="ledger-value is-warn">3.42%</div>
+                <div class="ledger-caption">Cartera con atraso mayor a 30 días</div>
+            </div>
+            <div class="ledger-item">
+                <div class="ledger-eyebrow">Estado del sistema <span class="ledger-dot"></span></div>
+                <div class="ledger-value is-status">Operativo</div>
+                <div class="ledger-caption">Todos los servicios funcionando</div>
+            </div>
+        </section>
+
+        <div class="section-head">
+            <div>
+                <p class="section-eyebrow">Panel de control</p>
+                <h1 class="section-title">Módulos de la plataforma</h1>
+            </div>
+            <span class="section-count">6 módulos · 2 activos</span>
+        </div>
+
+        <div class="module-grid">
+
+            <!-- Empleados — activo -->
+            <div class="module-card is-active">
+                <svg class="module-icon" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="15" cy="10.5" r="4" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M6.5 24c0-4.7 3.8-8 8.5-8s8.5 3.3 8.5 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                <h3 class="module-title">Empleados</h3>
+                <p class="module-desc">Administración de nómina, roles, registro de asesores de crédito y analistas financieros.</p>
+                <div class="module-footer">
+                    <span class="module-status is-active-status"><span class="dot"></span>Activo</span>
+                    <a href="{% url 'lista' %}" class="module-link">
+                        Ver módulo
+                        <svg viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Footer -->
-    <footer class="page-footer blue darken-3">
-        <div class="footer-copyright">
-            <div class="container white-text center-align">
-                Desarrollado por <a class="white-text" href="https://isaak.net" target="_blank">Isaak.net</a>
+            <!-- Seguridad — activo -->
+            <div class="module-card is-active">
+                <svg class="module-icon" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 4l9 3.5V14c0 6.4-3.9 10.7-9 12-5.1-1.3-9-5.6-9-12V7.5L15 4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M11.5 15l2.4 2.5L18.5 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h3 class="module-title">Seguridad</h3>
+                <p class="module-desc">Panel de control avanzado: gestión de permisos, auditoría de base de datos y CRUDs del sistema.</p>
+                <div class="module-footer">
+                    <span class="module-status is-active-status"><span class="dot"></span>Activo</span>
+                    <a href="/admin/" class="module-link">
+                        Acceder al sysadmin
+                        <svg viewBox="0 0 14 14" fill="none"><path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </a>
+                </div>
             </div>
+
+            <!-- Créditos — mockup -->
+            <div class="module-card is-locked">
+                <svg class="module-icon" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="15" cy="15" r="9.5" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M15 10v10M12 18.3c0 1.1 1.3 2 3 2s3-.9 3-2-1.3-1.8-3-2-3-.9-3-2 1.3-2 3-2 3 .9 3 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                <h3 class="module-title">Créditos</h3>
+                <p class="module-desc">Evaluación de solicitudes, tasas de interés, cálculo de cuotas y desembolsos automáticos.</p>
+                <div class="module-footer">
+                    <span class="module-status is-locked-status"><span class="dot"></span>En pruebas</span>
+                    <span class="module-link is-disabled">Bloqueado</span>
+                </div>
+            </div>
+
+            <!-- Clientes / Socios — mockup -->
+            <div class="module-card is-locked">
+                <svg class="module-icon" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11.5" cy="10.5" r="3.5" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="20" cy="12" r="2.8" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M4.5 23.5c0-4 3.1-6.8 7-6.8s7 2.8 7 6.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                    <path d="M18.5 17.2c2.9.4 5 2.6 5 6.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                <h3 class="module-title">Clientes / Socios</h3>
+                <p class="module-desc">Expedientes digitales, KYC, historial de transacciones y niveles de riesgo.</p>
+                <div class="module-footer">
+                    <span class="module-status is-locked-status"><span class="dot"></span>En pruebas</span>
+                    <span class="module-link is-disabled">Bloqueado</span>
+                </div>
+            </div>
+
+            <!-- Caja Chica y Bóveda — mockup -->
+            <div class="module-card is-locked">
+                <svg class="module-icon" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5" y="8" width="20" height="16" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                    <circle cx="15" cy="16" r="3.2" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M9.5 8V6a2.5 2.5 0 0 1 2.5-2.5h6A2.5 2.5 0 0 1 20.5 6v2" stroke="currentColor" stroke-width="1.4"/>
+                </svg>
+                <h3 class="module-title">Caja Chica y Bóveda</h3>
+                <p class="module-desc">Depósitos en cuentas de ahorro, pagos de cuotas y comisiones fijas por ventanilla.</p>
+                <div class="module-footer">
+                    <span class="module-status is-locked-status"><span class="dot"></span>En pruebas</span>
+                    <span class="module-link is-disabled">Bloqueado</span>
+                </div>
+            </div>
+
+            <!-- Contabilidad — mockup -->
+            <div class="module-card is-locked">
+                <svg class="module-icon" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 5.5h18v19H6z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M10 11h10M10 15.5h10M10 20h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                <h3 class="module-title">Contabilidad</h3>
+                <p class="module-desc">Asientos diarios automáticos, balance general y reportes para entes reguladores.</p>
+                <div class="module-footer">
+                    <span class="module-status is-locked-status"><span class="dot"></span>En pruebas</span>
+                    <span class="module-link is-disabled">Bloqueado</span>
+                </div>
+            </div>
+
         </div>
+    </main>
+
+    <footer class="site-footer">
+        <p>© 2026 Sistema Financiero Core · Desarrollado por <a href="https://isaak.net" target="_blank" rel="noopener">Isaak.net</a></p>
     </footer>
 
-    <!-- Compiled and minified JavaScript -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>
 </html>
