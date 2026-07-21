@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MicroFinanzas Pro{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+          integrity="sha512-UJfAaOlIRtdR+0P6C3KUoTDAxVTuy3lnSXLyLKlHYJlcSU8Juge/mjeaxDNMlw9LgeIotgz5FP8eUQPhX1q10A=="
+          crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="grey lighten-4" style="display: flex; min-height: 100vh; flex-direction: column;">
+
+    <nav class="indigo darken-4">
+        <div class="nav-wrapper container">
+            <a href="{% url 'home' %}" class="brand-logo">
+                <i class="material-icons left">account_balance</i>MicroFinanzas Pro
+            </a>
+            <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+            {% if user.is_authenticated %}
+            <ul id="nav-desktop" class="right hide-on-med-and-down">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li><a href="{% url 'financiera:clientes_lista' %}">Clientes</a></li>
+                <li><a href="{% url 'financiera:prestamos_lista' %}">Créditos</a></li>
+                <li><a href="{% url 'lista' %}">Empleados</a></li>
+                <li><a href="/admin/">Administración</a></li>
+                <li><a href="{% url 'logout' %}"><i class="material-icons left">exit_to_app</i>Salir</a></li>
+            </ul>
+            {% endif %}
+        </div>
+    </nav>
+
+    {% if user.is_authenticated %}
+    <ul class="sidenav" id="mobile-nav">
+        <li><a href="{% url 'home' %}">Inicio</a></li>
+        <li><a href="{% url 'financiera:clientes_lista' %}">Clientes</a></li>
+        <li><a href="{% url 'financiera:prestamos_lista' %}">Créditos</a></li>
+        <li><a href="{% url 'lista' %}">Empleados</a></li>
+        <li><a href="/admin/">Administración</a></li>
+        <li><a href="{% url 'logout' %}">Salir</a></li>
+    </ul>
+    {% endif %}
+
+    <main class="container" style="flex: 1 0 auto; margin-top: 24px; margin-bottom: 24px;">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="card-panel {% if message.tags == 'error' %}red lighten-4 red-text text-darken-4{% elif message.tags == 'success' %}teal lighten-4 teal-text text-darken-4{% else %}blue lighten-4 blue-text text-darken-4{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="page-footer indigo darken-4">
+        <div class="footer-copyright">
+            <div class="container white-text center-align">
+                MicroFinanzas Pro — Desarrollado por <a class="teal-text text-lighten-2" href="https://isaak.net" target="_blank">Isaak.net</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"
+            integrity="sha512-NiWqa2rceHnN3Z5j6mSAvbwwg3tiwVNxiAQaaSMSXnRRDh5C2mk/+sKQRw8qjV1vN4nf8iK2a0b048PnHbyx+Q=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            M.Sidenav.init(document.querySelectorAll('.sidenav'));
+            M.FormSelect.init(document.querySelectorAll('select'));
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Nueva Solicitud de Crédito · MicroFinanzas Pro{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col s12 m8 offset-m2">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title indigo-text text-darken-4"><i class="material-icons left">request_quote</i>Nueva Solicitud de Crédito</span>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="card-panel red lighten-4 red-text text-darken-4">{{ form.non_field_errors }}</div>
+                    {% endif %}
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <select name="{{ form.cliente.html_name }}" id="{{ form.cliente.id_for_label }}">
+                                <option value="" disabled selected>Selecciona un cliente</option>
+                                {% for cliente in form.fields.cliente.queryset %}
+                                    <option value="{{ cliente.pk }}">{{ cliente.nombre_completo }} ({{ cliente.numero_identificacion }})</option>
+                                {% endfor %}
+                            </select>
+                            <label>Cliente</label>
+                            {% if form.cliente.errors %}<span class="red-text">{{ form.cliente.errors|join:', ' }}</span>{% endif %}
+                        </div>
+                        <div class="input-field col s12 m6">
+                            {{ form.monto_solicitado }}
+                            <label for="{{ form.monto_solicitado.id_for_label }}" class="active">Monto Solicitado</label>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            {{ form.tasa_interes_anual }}
+                            <label for="{{ form.tasa_interes_anual.id_for_label }}" class="active">Tasa de Interés Anual (%)</label>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            {{ form.plazo_meses }}
+                            <label for="{{ form.plazo_meses.id_for_label }}" class="active">Plazo (meses)</label>
+                        </div>
+                        <div class="input-field col s12 m6">
+                            <select name="{{ form.frecuencia_pago.html_name }}" id="{{ form.frecuencia_pago.id_for_label }}">
+                                {% for value, label in form.fields.frecuencia_pago.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <label>Frecuencia de Pago</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="waves-effect waves-light btn teal darken-2">
+                        <i class="material-icons left">send</i>Enviar Solicitud
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

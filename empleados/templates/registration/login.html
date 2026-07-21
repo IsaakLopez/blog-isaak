@@ -3,25 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Gestión de Empleados</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <title>Iniciar Sesión · MicroFinanzas Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+          integrity="sha512-UJfAaOlIRtdR+0P6C3KUoTDAxVTuy3lnSXLyLKlHYJlcSU8Juge/mjeaxDNMlw9LgeIotgz5FP8eUQPhX1q10A=="
+          crossorigin="anonymous" referrerpolicy="no-referrer">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
-<body class="blue-grey lighten-5" style="display: flex; min-height: 100vh; flex-direction: column; justify-content: center;">
+<body class="indigo darken-4" style="display: flex; min-height: 100vh; flex-direction: column; justify-content: center;">
 
     <div class="container">
         <div class="row">
             <div class="col s12 m6 offset-m3">
-                <div class="card z-depth-2">
+                <div class="card z-depth-3">
                     <div class="card-content">
-                        <span class="card-title center-align blue-text text-darken-3">
-                            <i class="material-icons medium">account_circle</i>
-                            <br>Acceso Administrativo
+                        <span class="card-title center-align indigo-text text-darken-4">
+                            <i class="material-icons medium">account_balance</i>
+                            <br>MicroFinanzas Pro
                         </span>
-                        
+                        <p class="center-align grey-text text-darken-1">Acceso administrativo</p>
+
                         <form method="POST">
                             {% csrf_token %}
-                            
+
                             {% if form.errors %}
                                 <div class="card-panel red lighten-4 red-text text-darken-4 text-center">
                                     Usuario o contraseña incorrectos.
@@ -41,7 +44,7 @@
                             </div>
 
                             <div class="center-align" style="margin-top: 20px;">
-                                <button type="submit" class="waves-effect waves-light btn blue darken-3 style-btn" style="width: 100%;">
+                                <button type="submit" class="waves-effect waves-light btn teal darken-2" style="width: 100%;">
                                     Ingresar
                                 </button>
                             </div>
@@ -52,6 +55,8 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"
+            integrity="sha512-NiWqa2rceHnN3Z5j6mSAvbwwg3tiwVNxiAQaaSMSXnRRDh5C2mk/+sKQRw8qjV1vN4nf8iK2a0b048PnHbyx+Q=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </body>
 </html>

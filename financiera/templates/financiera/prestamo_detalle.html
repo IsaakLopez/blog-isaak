@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}{{ prestamo.codigo_credito }} · MicroFinanzas Pro{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-content">
+        <span class="card-title indigo-text text-darken-4">
+            <i class="material-icons left">request_quote</i>{{ prestamo.codigo_credito }}
+            {% if prestamo.estado == 'APROBADO' or prestamo.estado == 'DESEMBOLSADO' or prestamo.estado == 'LIQUIDADO' %}
+                <span class="new badge green" data-badge-caption="{{ prestamo.get_estado_display }}"></span>
+            {% elif prestamo.estado == 'PENDIENTE' or prestamo.estado == 'EN_REVISION' %}
+                <span class="new badge orange" data-badge-caption="{{ prestamo.get_estado_display }}"></span>
+            {% elif prestamo.estado == 'EN_MORA' or prestamo.estado == 'RECHAZADO' or prestamo.estado == 'CANCELADO' %}
+                <span class="new badge red" data-badge-caption="{{ prestamo.get_estado_display }}"></span>
+            {% else %}
+                <span class="new badge grey" data-badge-caption="{{ prestamo.get_estado_display }}"></span>
+            {% endif %}
+        </span>
+
+        <div class="row">
+            <div class="col s12 m6"><strong>Cliente:</strong> <a href="{% url 'financiera:cliente_detalle' prestamo.cliente.pk %}">{{ prestamo.cliente }}</a></div>
+            <div class="col s12 m6"><strong>Asesor:</strong> {{ prestamo.asesor|default:'—' }}</div>
+            <div class="col s12 m6"><strong>Monto Solicitado:</strong> L {{ prestamo.monto_solicitado }}</div>
+            <div class="col s12 m6"><strong>Tasa Interés Anual:</strong> {{ prestamo.tasa_interes_anual }}%</div>
+            <div class="col s12 m6"><strong>Plazo:</strong> {{ prestamo.plazo_meses }} meses</div>
+            <div class="col s12 m6"><strong>Frecuencia de Pago:</strong> {{ prestamo.get_frecuencia_pago_display }}</div>
+            <div class="col s12 m6"><strong>Fecha Solicitud:</strong> {{ prestamo.fecha_solicitud|date:'d/m/Y H:i' }}</div>
+            <div class="col s12 m6"><strong>Fecha Aprobación:</strong> {{ prestamo.fecha_aprobacion|date:'d/m/Y H:i'|default:'—' }}</div>
+            <div class="col s12 m6"><strong>Fecha Desembolso:</strong> {{ prestamo.fecha_desembolso|date:'d/m/Y H:i'|default:'—' }}</div>
+        </div>
+
+        <div style="margin-top: 12px;">
+            {% if prestamo.estado == 'PENDIENTE' or prestamo.estado == 'APROBADO' %}
+                <a href="{% url 'financiera:generar_contrato' prestamo.pk %}" class="waves-effect waves-light btn indigo darken-3">
+                    <i class="material-icons left">description</i>Generar Contrato Word &amp; Imprimir
+                </a>
+            {% endif %}
+
+            {% for nuevo_estado, etiqueta in transiciones_disponibles %}
+                <form method="POST" action="{% url 'financiera:prestamo_transicion' prestamo.pk nuevo_estado %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="waves-effect waves-light btn teal darken-2">
+                        {{ etiqueta }}
+                    </button>
+                </form>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card-action">
+        <a href="{% url 'financiera:prestamos_lista' %}" class="teal-text">Volver a Créditos</a>
+    </div>
+</div>
+
+{% if cuotas %}
+<h6 class="indigo-text text-darken-4" style="margin-top: 24px;">Tabla de Amortización</h6>
+<table class="highlight responsive-table">
+    <thead>
+        <tr><th>N°</th><th>Vencimiento</th><th>Capital</th><th>Interés</th><th>Total Cuota</th><th>Pagado</th><th>Estado</th>{% if puede_cobrar %}<th>Acción</th>{% endif %}</tr>
+    </thead>
+    <tbody>
+        {% for cuota in cuotas %}
+        <tr>
+            <td>{{ cuota.numero_cuota }}</td>
+            <td>{{ cuota.fecha_vencimiento|date:'d/m/Y' }}</td>
+            <td>L {{ cuota.monto_capital }}</td>
+            <td>L {{ cuota.monto_interes }}</td>
+            <td>L {{ cuota.monto_total_cuota }}</td>
+            <td>L {{ cuota.monto_pagado }}</td>
+            <td>
+                {% if cuota.estado_cuota == 'PAGADO' %}
+                    <span class="new badge green" data-badge-caption="Pagado"></span>
+                {% elif cuota.estado_cuota == 'PAGADO_PARCIAL' %}
+                    <span class="new badge orange" data-badge-caption="Parcial"></span>
+                {% elif cuota.estado_cuota == 'VENCIDO' %}
+                    <span class="new badge red" data-badge-caption="Vencido"></span>
+                {% else %}
+                    <span class="new badge grey" data-badge-caption="Pendiente"></span>
+                {% endif %}
+            </td>
+            {% if puede_cobrar %}
+            <td>
+                {% if cuota.estado_cuota != 'PAGADO' %}
+                <a href="{% url 'financiera:registrar_pago' cuota.pk %}" class="waves-effect waves-light btn-small teal darken-2">
+                    <i class="material-icons left">point_of_sale</i>Cobrar
+                </a>
+                {% endif %}
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if transacciones %}
+<h6 class="indigo-text text-darken-4" style="margin-top: 24px;">Movimientos de Caja</h6>
+<table class="highlight responsive-table">
+    <thead>
+        <tr><th>Comprobante</th><th>Tipo</th><th>Monto</th><th>Cajero</th><th>Fecha</th></tr>
+    </thead>
+    <tbody>
+        {% for transaccion in transacciones %}
+        <tr>
+            <td>{{ transaccion.numero_comprobante }}</td>
+            <td>{{ transaccion.get_tipo_movimiento_display }}</td>
+            <td>L {{ transaccion.monto_pagado }}</td>
+            <td>{{ transaccion.cajero|default:'—' }}</td>
+            <td>{{ transaccion.fecha_hora|date:'d/m/Y H:i' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

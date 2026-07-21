@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Clientes · MicroFinanzas Pro{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-content">
+        <div class="row valign-wrapper" style="margin-bottom: 0;">
+            <div class="col s8">
+                <span class="card-title indigo-text text-darken-4"><i class="material-icons left">people</i>Clientes / Socios</span>
+            </div>
+            <div class="col s4 right-align">
+                <a href="{% url 'financiera:cliente_crear' %}" class="waves-effect waves-light btn teal darken-2">
+                    <i class="material-icons left">person_add</i>Nuevo Cliente
+                </a>
+            </div>
+        </div>
+
+        {% if clientes %}
+            <table class="highlight responsive-table">
+                <thead>
+                    <tr>
+                        <th>No. Identificación</th>
+                        <th>Nombre</th>
+                        <th>Actividad Económica</th>
+                        <th>Ingresos Mensuales</th>
+                        <th>Asesor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                        <tr>
+                            <td><a href="{% url 'financiera:cliente_detalle' cliente.pk %}">{{ cliente.numero_identificacion }}</a></td>
+                            <td>{{ cliente.nombre_completo }}</td>
+                            <td>{{ cliente.actividad_economica|default:'—' }}</td>
+                            <td>L {{ cliente.ingresos_mensuales }}</td>
+                            <td>{{ cliente.asesor|default:'—' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% include 'financiera/_paginacion.html' %}
+        {% else %}
+            <p>No hay clientes registrados aún.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
