@@ -19,8 +19,16 @@ def actualizar_estados_mora(hoy=None):
         prestamos_en_mora.add(cuota.prestamo_id)
 
     if prestamos_en_mora:
-        Prestamo.objects.filter(
-            id__in=prestamos_en_mora, estado=Prestamo.ESTADO_DESEMBOLSADO
-        ).update(estado=Prestamo.ESTADO_EN_MORA)
+        ids_a_notificar = list(
+            Prestamo.objects.filter(
+                id__in=prestamos_en_mora, estado=Prestamo.ESTADO_DESEMBOLSADO
+            ).values_list('id', flat=True)
+        )
+        Prestamo.objects.filter(id__in=ids_a_notificar).update(estado=Prestamo.ESTADO_EN_MORA)
+
+        from empleados.services.notificaciones import notificar_mora
+
+        for prestamo in Prestamo.objects.filter(id__in=ids_a_notificar).select_related('cliente', 'asesor'):
+            notificar_mora(prestamo)
 
     return len(prestamos_en_mora)

@@ -33,7 +33,12 @@ urlpatterns = [
     path('empleados/nuevo/', empleados_views.empleado_crear, name='empleado_crear'),
     path('empleados/<int:pk>/editar/', empleados_views.empleado_editar, name='empleado_editar'),
     path('empleados/<int:pk>/resetear-password/', empleados_views.empleado_resetear_password, name='empleado_resetear_password'),
+    path('empleados/<int:pk>/eliminar/', empleados_views.empleado_eliminar, name='empleado_eliminar'),
     path('cuenta/cambiar-password/', empleados_views.cambiar_mi_password, name='cambiar_mi_password'),
+
+    path('notificaciones/', empleados_views.notificaciones_lista, name='notificaciones_lista'),
+    path('notificaciones/<int:pk>/leer/', empleados_views.notificacion_marcar_leida, name='notificacion_marcar_leida'),
+    path('notificaciones/marcar-todas/', empleados_views.notificaciones_marcar_todas, name='notificaciones_marcar_todas'),
 
     path('financiera/', include('financiera.urls')),
 ]

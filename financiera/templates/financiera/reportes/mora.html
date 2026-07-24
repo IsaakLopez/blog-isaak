@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Mora / Cartera en Riesgo · Portal IMFDC{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-actions-row">
+        <div class="card-title" style="margin-bottom: 0;">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='clock' size=16 %}</span>
+            Mora / Cartera en Riesgo
+        </div>
+        <a href="{% url 'financiera:reporte_mora' %}?export=xlsx" class="btn btn-dark">
+            {% include 'partials/_icon.html' with name='file-text' size=16 %}Exportar a Excel
+        </a>
+    </div>
+    <p class="subsection-note">Cuotas vencidas sin pagar por completo, a la fecha de hoy.</p>
+
+    {% if filas %}
+    <div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Cliente</th><th>Asesor</th><th>Código Crédito</th><th>Cuota N°</th>
+                <th>Fecha Vencimiento</th><th>Días de Atraso</th><th>Saldo Pendiente</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in filas %}
+            <tr>
+                <td><a class="link" href="{% url 'financiera:cliente_detalle' f.cuota.prestamo.cliente.pk %}">{{ f.cuota.prestamo.cliente }}</a></td>
+                <td>{{ f.cuota.prestamo.asesor|default:'—' }}</td>
+                <td><a class="link" href="{% url 'financiera:prestamo_detalle' f.cuota.prestamo.pk %}">{{ f.cuota.prestamo.codigo_credito }}</a></td>
+                <td>{{ f.cuota.numero_cuota }}</td>
+                <td>{{ f.cuota.fecha_vencimiento|date:'d/m/Y' }}</td>
+                <td><span class="badge badge-danger">{{ f.dias_atraso }} días</span></td>
+                <td>L {{ f.saldo_pendiente|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+        <p class="empty-state">No hay cuotas en mora en este momento.</p>
+    {% endif %}
+</div>
+{% endblock %}

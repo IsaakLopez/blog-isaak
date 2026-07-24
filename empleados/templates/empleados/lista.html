@@ -60,6 +60,11 @@
                                     {% include 'partials/_icon.html' with name='lock' size=14 %}Contraseña
                                 </a>
                                 {% endif %}
+                                {% if emp.user_id != request.user.id %}
+                                <a href="{% url 'empleado_eliminar' emp.pk %}" class="btn btn-outline btn-small" style="color: var(--danger-text);">
+                                    {% include 'partials/_icon.html' with name='trash' size=14 %}Eliminar
+                                </a>
+                                {% endif %}
                             </div>
                         </td>
                         {% endif %}

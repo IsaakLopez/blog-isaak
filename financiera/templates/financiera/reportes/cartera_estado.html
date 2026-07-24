@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Cartera por Estado · Portal IMFDC{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-actions-row">
+        <div class="card-title" style="margin-bottom: 0;">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='dashboard' size=16 %}</span>
+            Cartera por Estado
+        </div>
+        <a href="{% url 'financiera:reporte_cartera_estado' %}?export=xlsx" class="btn btn-dark">
+            {% include 'partials/_icon.html' with name='file-text' size=16 %}Exportar a Excel
+        </a>
+    </div>
+    <p class="subsection-note">Foto actual de la cartera de créditos, sin filtro de fechas.</p>
+
+    {% if filas %}
+    <div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr><th>Estado</th><th>Cantidad de Créditos</th><th>Monto Total</th></tr>
+        </thead>
+        <tbody>
+            {% for estado, cantidad, monto in filas %}
+            <tr>
+                <td>{{ estado }}</td>
+                <td>{{ cantidad }}</td>
+                <td>L {{ monto|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+        <p class="empty-state">No hay créditos registrados todavía.</p>
+    {% endif %}
+</div>
+{% endblock %}

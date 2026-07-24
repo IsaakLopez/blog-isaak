@@ -76,5 +76,16 @@
 {% elif name == 'search' %}
     <circle cx="10.8" cy="10.8" r="6.3"></circle>
     <line x1="15.5" y1="15.5" x2="20.5" y2="20.5"></line>
+{% elif name == 'chart' %}
+    <line x1="4.5" y1="20.5" x2="19.5" y2="20.5"></line>
+    <rect x="6" y="12.5" width="3.4" height="8"></rect>
+    <rect x="10.8" y="8" width="3.4" height="12.5"></rect>
+    <rect x="15.6" y="4.5" width="3.4" height="16"></rect>
+{% elif name == 'trash' %}
+    <polyline points="4.5 6.5 6 6.5 20 6.5"></polyline>
+    <path d="M8 6.5V4.5a1.5 1.5 0 0 1 1.5-1.5h5a1.5 1.5 0 0 1 1.5 1.5v2"></path>
+    <path d="M18.5 6.5l-.8 13a1.5 1.5 0 0 1-1.5 1.4H8.8a1.5 1.5 0 0 1-1.5-1.4l-.8-13"></path>
+    <line x1="10.2" y1="10.5" x2="10.2" y2="17"></line>
+    <line x1="13.8" y1="10.5" x2="13.8" y2="17"></line>
 {% endif %}
 </svg>{% endwith %}

@@ -31,19 +31,21 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Código</th>
+                    <th>Identificador</th>
                     <th>Cliente</th>
+                    <th>DNI</th>
                     <th>Monto</th>
                     <th>Estado</th>
-                    <th>Fecha Solicitud</th>
+                    <th>Fecha de Solicitud</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for prestamo in prestamos %}
                     <tr>
-                        <td><a class="link" href="{% url 'financiera:prestamo_detalle' prestamo.pk %}">{{ prestamo.codigo_credito }}</a></td>
-                        <td>{{ prestamo.cliente }}</td>
+                        <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                        <td><a class="link" href="{% url 'financiera:prestamo_detalle' prestamo.pk %}">{{ prestamo.cliente }}</a></td>
+                        <td>{{ prestamo.cliente.numero_identificacion }}</td>
                         <td>L {{ prestamo.monto_solicitado }}</td>
                         <td>
                             {% if prestamo.estado == 'APROBADO' or prestamo.estado == 'DESEMBOLSADO' or prestamo.estado == 'LIQUIDADO' %}

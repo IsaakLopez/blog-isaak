@@ -62,6 +62,22 @@ _CAMPOS_NO_RECOLECTADOS = {
 }
 
 
+def _con_sangria(contexto, espacios=4):
+    """Antepone espacios a cada texto ingresado en la Solicitud de Crédito
+    (para que se vea mejor formateado, ej. 'Celular:     90909090'). No
+    aplica a las casillas 'chk_*' -- esas ya tienen su propio espaciado,
+    calibrado para que la casilla no quede pegada a la opción anterior ni
+    provoque saltos de línea en medio de una opción."""
+    relleno = ' ' * espacios
+    resultado = {}
+    for clave, valor in contexto.items():
+        if clave.startswith('chk_') or valor in (None, ''):
+            resultado[clave] = valor
+        else:
+            resultado[clave] = f'{relleno}{valor}'
+    return resultado
+
+
 def _marcar(mapa_chk, valor_seleccionado):
     """Devuelve {nombre_chk: ' ☒'/' ☐'}, marcando con una casilla visible la
     opción elegida y dejando las demás como casilla vacía. El espacio inicial
@@ -207,6 +223,7 @@ def generar_solicitud_credito(prestamo):
 
         **_CAMPOS_NO_RECOLECTADOS,
     }
+    contexto = _con_sangria(contexto)
 
     documento = DocxTemplate(str(PLANTILLA_SOLICITUD_PATH))
     documento.render(contexto)

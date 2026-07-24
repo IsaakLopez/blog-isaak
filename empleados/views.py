@@ -12,8 +12,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from financiera.models import Cliente, CuotaAmortizacion, Prestamo, TransaccionCaja
 from financiera.services.mora import actualizar_estados_mora
 from .forms import EmpleadoCreateForm, EmpleadoEditForm, ResetPasswordForm
-from .models import Empleado
+from .models import Empleado, Notificacion
 from .permisos import requiere_admin
+from .services.notificaciones import notificar_admin_accion
 
 MESES_ABREV = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
@@ -147,6 +148,10 @@ def empleado_crear(request):
                 enviado = _notificar_credenciales(empleado, form.cleaned_data['password1'])
                 mensaje += ' Se envió la contraseña por correo.' if enviado else ' No se pudo enviar el correo — comparte la contraseña manualmente.'
             messages.success(request, mensaje)
+            notificar_admin_accion(
+                f'Se creó la cuenta de {empleado} ({empleado.get_cargo_display()}).',
+                actor=getattr(request.user, 'empleado', None),
+            )
             return redirect('lista')
     else:
         form = EmpleadoCreateForm()
@@ -168,6 +173,25 @@ def empleado_editar(request, pk):
 
 
 @requiere_admin
+def empleado_eliminar(request, pk):
+    empleado = get_object_or_404(Empleado, pk=pk)
+    if empleado.user_id and empleado.user_id == request.user.id:
+        messages.error(request, 'No puedes eliminar tu propia cuenta de empleado.')
+        return redirect('lista')
+    if request.method == 'POST':
+        nombre = str(empleado)
+        usuario = empleado.user
+        actor = getattr(request.user, 'empleado', None)
+        empleado.delete()
+        if usuario is not None:
+            usuario.delete()
+        messages.success(request, f'Empleado {nombre} eliminado correctamente.')
+        notificar_admin_accion(f'Se eliminó al empleado {nombre}.', actor=actor)
+        return redirect('lista')
+    return render(request, 'empleados/empleado_eliminar.html', {'empleado': empleado})
+
+
+@requiere_admin
 def empleado_resetear_password(request, pk):
     empleado = get_object_or_404(Empleado, pk=pk)
     if empleado.user is None:
@@ -183,6 +207,10 @@ def empleado_resetear_password(request, pk):
                 enviado = _notificar_credenciales(empleado, form.cleaned_data['password1'])
                 mensaje += ' Se envió por correo.' if enviado else ' No se pudo enviar el correo — compártela manualmente.'
             messages.success(request, mensaje)
+            notificar_admin_accion(
+                f'Se restableció la contraseña de {empleado}.',
+                actor=getattr(request.user, 'empleado', None),
+            )
             return redirect('lista')
     else:
         form = ResetPasswordForm()
@@ -201,3 +229,28 @@ def cambiar_mi_password(request):
     else:
         form = PasswordChangeForm(user=request.user)
     return render(request, 'empleados/cambiar_password.html', {'form': form})
+
+
+@login_required
+def notificacion_marcar_leida(request, pk):
+    empleado = getattr(request.user, 'empleado', None)
+    notificacion = get_object_or_404(Notificacion, pk=pk, destinatario=empleado)
+    if not notificacion.leida:
+        notificacion.leida = True
+        notificacion.save(update_fields=['leida'])
+    return redirect(notificacion.url or 'home')
+
+
+@login_required
+def notificaciones_marcar_todas(request):
+    empleado = getattr(request.user, 'empleado', None)
+    if empleado is not None:
+        empleado.notificaciones.filter(leida=False).update(leida=True)
+    return redirect(request.META.get('HTTP_REFERER') or 'notificaciones_lista')
+
+
+@login_required
+def notificaciones_lista(request):
+    empleado = getattr(request.user, 'empleado', None)
+    notificaciones = empleado.notificaciones.all() if empleado else Notificacion.objects.none()
+    return render(request, 'empleados/notificaciones_lista.html', {'notificaciones': notificaciones})

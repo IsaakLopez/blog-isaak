@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Notificaciones · Portal IMFDC{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-actions-row">
+        <div class="card-title" style="margin-bottom: 0;">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='bell' size=16 %}</span>
+            Notificaciones
+        </div>
+        {% if notificaciones_no_leidas %}
+        <form method="POST" action="{% url 'notificaciones_marcar_todas' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline btn-small">Marcar todas como leídas</button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if notificaciones %}
+    <div class="list-rows">
+        {% for notif in notificaciones %}
+        <a href="{% url 'notificacion_marcar_leida' notif.pk %}" class="list-row" style="{% if not notif.leida %}background: var(--neutral-bg); border-radius: var(--radius-md); padding: 8px;{% endif %}">
+            <span class="list-row-icon">
+                {% if notif.tipo == 'MORA' %}
+                    {% include 'partials/_icon.html' with name='clock' size=18 %}
+                {% elif notif.tipo == 'CREDITO' %}
+                    {% include 'partials/_icon.html' with name='credit-card' size=18 %}
+                {% else %}
+                    {% include 'partials/_icon.html' with name='briefcase' size=18 %}
+                {% endif %}
+            </span>
+            <div>
+                <div class="list-row-title">{{ notif.mensaje }}</div>
+                <div class="list-row-sub">{{ notif.get_tipo_display }} — {{ notif.creada_en|date:'d/m/Y H:i' }}</div>
+            </div>
+            {% if not notif.leida %}<span class="badge badge-info" style="margin-left:auto;">Nueva</span>{% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p class="empty-state">No tienes notificaciones.</p>
+    {% endif %}
+</div>
+{% endblock %}

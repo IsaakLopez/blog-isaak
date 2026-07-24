@@ -330,6 +330,10 @@ class Prestamo(models.Model):
 
         self.save()
 
+        from empleados.services.notificaciones import notificar_cambio_estado
+
+        notificar_cambio_estado(self, actor=empleado)
+
         if nuevo_estado == self.ESTADO_APROBADO:
             self._generar_contrato()
         elif nuevo_estado == self.ESTADO_DESEMBOLSADO and estado_anterior == self.ESTADO_APROBADO:

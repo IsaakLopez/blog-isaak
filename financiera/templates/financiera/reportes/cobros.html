@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Cobros por Período · Portal IMFDC{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-actions-row">
+        <div class="card-title" style="margin-bottom: 0;">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='cash' size=16 %}</span>
+            Cobros por Período
+        </div>
+        <a href="{% url 'financiera:reporte_cobros' %}?desde={{ desde }}&hasta={{ hasta }}&export=xlsx" class="btn btn-dark">
+            {% include 'partials/_icon.html' with name='file-text' size=16 %}Exportar a Excel
+        </a>
+    </div>
+
+    <form method="GET" class="grid-3" style="align-items: end; margin-bottom: 18px;">
+        <div class="field">
+            <label for="desde">Desde</label>
+            <input type="date" name="desde" id="desde" value="{{ desde }}">
+        </div>
+        <div class="field">
+            <label for="hasta">Hasta</label>
+            <input type="date" name="hasta" id="hasta" value="{{ hasta }}">
+        </div>
+        <button type="submit" class="btn btn-outline">Filtrar</button>
+    </form>
+
+    {% if filas %}
+    <div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr><th>Fecha</th><th>Cantidad de Pagos</th><th>Total Cobrado</th></tr>
+        </thead>
+        <tbody>
+            {% for dia, cantidad, total in filas %}
+            <tr>
+                <td>{{ dia|date:'d/m/Y' }}</td>
+                <td>{{ cantidad }}</td>
+                <td>L {{ total|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+        <p class="empty-state">No hay cobros registrados en este rango de fechas.</p>
+    {% endif %}
+</div>
+{% endblock %}

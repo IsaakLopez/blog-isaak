@@ -26,11 +26,39 @@
         <a href="{% url 'home' %}" class="{% if request.path == '/' %}active{% endif %}">Inicio</a>
         <a href="{% url 'financiera:clientes_lista' %}" class="{% if '/financiera/clientes' in request.path %}active{% endif %}">Clientes</a>
         <a href="{% url 'financiera:prestamos_lista' %}" class="{% if '/financiera/prestamos' in request.path %}active{% endif %}">Créditos</a>
+        <a href="{% url 'financiera:reportes_index' %}" class="{% if '/financiera/reportes' in request.path %}active{% endif %}">Reportes</a>
         <a href="{% url 'lista' %}" class="{% if '/empleados/' in request.path %}active{% endif %}">Empleados</a>
     </nav>
 
     <div class="topbar-right">
-        <span class="icon-btn" title="Notificaciones">{% include 'partials/_icon.html' with name='bell' size=18 %}</span>
+        <div class="user-menu">
+            <button type="button" class="icon-btn" id="notif-trigger" style="position: relative;" title="Notificaciones">
+                {% include 'partials/_icon.html' with name='bell' size=18 %}
+                {% if notificaciones_no_leidas %}<span class="notif-badge">{{ notificaciones_no_leidas }}</span>{% endif %}
+            </button>
+            <div class="user-dropdown" id="notif-dropdown" style="width: 320px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding: 6px 10px 10px;">
+                    <strong style="font-size:.9rem;">Notificaciones</strong>
+                    {% if notificaciones_no_leidas %}
+                    <form method="POST" action="{% url 'notificaciones_marcar_todas' %}" style="border-top:none; margin:0; padding:0;">
+                        {% csrf_token %}
+                        <button type="submit" style="width:auto; padding: 2px 6px; font-size:.76rem; color: var(--text-muted);">Marcar leídas</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% for notif in notificaciones_recientes %}
+                <a href="{% url 'notificacion_marcar_leida' notif.pk %}" style="{% if not notif.leida %}background: var(--neutral-bg);{% endif %} white-space: normal; align-items: flex-start;">
+                    <span style="flex:1;">
+                        <span style="display:block; font-size:.84rem; font-weight:600;">{{ notif.mensaje }}</span>
+                        <span style="display:block; font-size:.74rem; color: var(--text-faint); margin-top:2px;">{{ notif.creada_en|date:'d/m/Y H:i' }}</span>
+                    </span>
+                </a>
+                {% empty %}
+                <p class="empty-state" style="padding: 0 10px 10px;">No tienes notificaciones.</p>
+                {% endfor %}
+                <a href="{% url 'notificaciones_lista' %}" style="border-top: 1px solid var(--border); margin-top:4px; padding-top:8px; justify-content:center; text-align:center;">Ver todas</a>
+            </div>
+        </div>
 
         <div class="user-menu">
             <button type="button" class="user-trigger" id="user-trigger">
@@ -69,6 +97,7 @@
     <a href="{% url 'home' %}" class="{% if request.path == '/' %}active{% endif %}">Inicio</a>
     <a href="{% url 'financiera:clientes_lista' %}" class="{% if '/financiera/clientes' in request.path %}active{% endif %}">Clientes</a>
     <a href="{% url 'financiera:prestamos_lista' %}" class="{% if '/financiera/prestamos' in request.path %}active{% endif %}">Créditos</a>
+    <a href="{% url 'financiera:reportes_index' %}" class="{% if '/financiera/reportes' in request.path %}active{% endif %}">Reportes</a>
     <a href="{% url 'lista' %}" class="{% if '/empleados/' in request.path %}active{% endif %}">Empleados</a>
 </nav>
 {% endif %}
@@ -109,6 +138,20 @@
             document.addEventListener('click', function (e) {
                 if (!userDropdown.contains(e.target)) {
                     userDropdown.classList.remove('open');
+                }
+            });
+        }
+
+        var notifTrigger = document.getElementById('notif-trigger');
+        var notifDropdown = document.getElementById('notif-dropdown');
+        if (notifTrigger && notifDropdown) {
+            notifTrigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                notifDropdown.classList.toggle('open');
+            });
+            document.addEventListener('click', function (e) {
+                if (!notifDropdown.contains(e.target)) {
+                    notifDropdown.classList.remove('open');
                 }
             });
         }

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Eliminar Empleado · Portal IMFDC{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-title">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='briefcase' size=16 %}</span>
+            Eliminar Empleado
+        </div>
+        <p class="subsection-note">
+            ¿Confirmas que deseas eliminar a <strong>{{ empleado }}</strong>
+            ({{ empleado.get_cargo_display }})?
+            {% if empleado.user %}Su cuenta de usuario ({{ empleado.user.username }}) también será eliminada y ya no podrá iniciar sesión.{% endif %}
+        </p>
+        <div class="alert alert-error">Esta acción no se puede deshacer.</div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-dark">
+                    {% include 'partials/_icon.html' with name='check' size=16 %}Sí, eliminar
+                </button>
+                <a href="{% url 'lista' %}" class="btn btn-outline">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

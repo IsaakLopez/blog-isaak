@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Reportes · Portal IMFDC{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Reportes</h1>
+    <p class="subtitle">Colocación, cartera, mora y cobros de la institución.</p>
+</div>
+
+<div class="module-grid">
+    <div class="module-card">
+        <div class="module-card-head">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='trending-up' size=16 %}</span>
+            <strong>Colocación por Asesor</strong>
+        </div>
+        <p>Monto y cantidad de créditos desembolsados por cada asesor en un rango de fechas.</p>
+        <a href="{% url 'financiera:reporte_colocacion' %}" class="btn btn-outline btn-small">Ver reporte</a>
+    </div>
+    <div class="module-card">
+        <div class="module-card-head">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='dashboard' size=16 %}</span>
+            <strong>Cartera por Estado</strong>
+        </div>
+        <p>Cantidad y monto de créditos en cada estado: pendiente, aprobado, desembolsado, en mora, liquidado.</p>
+        <a href="{% url 'financiera:reporte_cartera_estado' %}" class="btn btn-outline btn-small">Ver reporte</a>
+    </div>
+    <div class="module-card">
+        <div class="module-card-head">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='clock' size=16 %}</span>
+            <strong>Mora / Cartera en Riesgo</strong>
+        </div>
+        <p>Cuotas vencidas con cliente, asesor, saldo pendiente y días de atraso.</p>
+        <a href="{% url 'financiera:reporte_mora' %}" class="btn btn-outline btn-small">Ver reporte</a>
+    </div>
+    <div class="module-card">
+        <div class="module-card-head">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='cash' size=16 %}</span>
+            <strong>Cobros por Período</strong>
+        </div>
+        <p>Total recaudado en pagos de cuotas, agrupado por día, en un rango de fechas.</p>
+        <a href="{% url 'financiera:reporte_cobros' %}" class="btn btn-outline btn-small">Ver reporte</a>
+    </div>
+</div>
+{% endblock %}

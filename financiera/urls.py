@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import views, views_reportes
 
 app_name = 'financiera'
 
@@ -18,4 +18,10 @@ urlpatterns = [
     path('prestamos/<int:pk>/solicitud/', views.generar_solicitud_view, name='generar_solicitud'),
 
     path('cuotas/<int:pk>/pagar/', views.registrar_pago, name='registrar_pago'),
+
+    path('reportes/', views_reportes.reportes_index, name='reportes_index'),
+    path('reportes/colocacion/', views_reportes.reporte_colocacion, name='reporte_colocacion'),
+    path('reportes/cartera-por-estado/', views_reportes.reporte_cartera_estado, name='reporte_cartera_estado'),
+    path('reportes/mora/', views_reportes.reporte_mora, name='reporte_mora'),
+    path('reportes/cobros/', views_reportes.reporte_cobros, name='reporte_cobros'),
 ]

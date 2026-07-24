@@ -66,3 +66,30 @@ class Empleado(models.Model):
         if self.user_id and self.user.is_active != self.activo:
             self.user.is_active = self.activo
             self.user.save(update_fields=['is_active'])
+
+
+class Notificacion(models.Model):
+    TIPO_MORA = 'MORA'
+    TIPO_CREDITO = 'CREDITO'
+    TIPO_ADMIN = 'ADMIN'
+
+    TIPO_CHOICES = [
+        (TIPO_MORA, 'Mora'),
+        (TIPO_CREDITO, 'Crédito'),
+        (TIPO_ADMIN, 'Administración'),
+    ]
+
+    destinatario = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='notificaciones')
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    mensaje = models.CharField(max_length=255)
+    url = models.CharField(max_length=255, blank=True)
+    leida = models.BooleanField(default=False)
+    creada_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Notificación'
+        verbose_name_plural = 'Notificaciones'
+        ordering = ['-creada_en']
+
+    def __str__(self):
+        return f'{self.get_tipo_display()} · {self.destinatario} · {self.mensaje[:40]}'
