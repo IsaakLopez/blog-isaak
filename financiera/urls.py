@@ -9,6 +9,7 @@ urlpatterns = [
     path('clientes/nuevo/', views.cliente_crear, name='cliente_crear'),
     path('clientes/<int:pk>/', views.cliente_detalle, name='cliente_detalle'),
     path('clientes/<int:pk>/editar/', views.cliente_editar, name='cliente_editar'),
+    path('clientes/validar-dni/', views.validar_cliente_dni, name='validar_cliente_dni'),
 
     path('prestamos/', views.prestamos_lista, name='prestamos_lista'),
     path('prestamos/nuevo/', views.prestamo_crear, name='prestamo_crear'),
@@ -16,6 +17,7 @@ urlpatterns = [
     path('prestamos/<int:pk>/transicion/<str:nuevo_estado>/', views.prestamo_transicion, name='prestamo_transicion'),
     path('prestamos/<int:pk>/contrato/', views.generar_contrato_view, name='generar_contrato'),
     path('prestamos/<int:pk>/solicitud/', views.generar_solicitud_view, name='generar_solicitud'),
+    path('prestamos/<int:pk>/recibo-desembolso/', views.generar_recibo_desembolso_view, name='generar_recibo_desembolso'),
 
     path('cuotas/<int:pk>/pagar/', views.registrar_pago, name='registrar_pago'),
 

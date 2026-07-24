@@ -184,6 +184,13 @@ class Prestamo(models.Model):
         (FRECUENCIA_MENSUAL, 'Mensual'),
     ]
 
+    TIPO_CREDITO_PERSONAL = 'PERSONAL'
+    TIPO_CREDITO_HIPOTECARIO = 'HIPOTECARIO'
+    TIPO_CREDITO_CHOICES = [
+        (TIPO_CREDITO_PERSONAL, 'Personal'),
+        (TIPO_CREDITO_HIPOTECARIO, 'Hipotecario'),
+    ]
+
     DESTINO_MEJORAS = 'MEJORAS'
     DESTINO_PAGO_DEUDA = 'PAGO_DEUDA'
     DESTINO_COLEGIATURA = 'COLEGIATURA'
@@ -249,6 +256,9 @@ class Prestamo(models.Model):
     tasa_interes_anual = models.DecimalField(max_digits=5, decimal_places=2, validators=[VALOR_NO_NEGATIVO])
     plazo_meses = models.PositiveIntegerField(validators=[MinValueValidator(1, message='Debe ser al menos 1 mes.')])
     frecuencia_pago = models.CharField(max_length=15, choices=FRECUENCIA_CHOICES, default=FRECUENCIA_MENSUAL)
+    tipo_credito = models.CharField(
+        'Tipo de Crédito', max_length=15, choices=TIPO_CREDITO_CHOICES, default=TIPO_CREDITO_PERSONAL,
+    )
     destino = models.CharField('Destino del préstamo', max_length=20, choices=DESTINO_CHOICES)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_PENDIENTE)
 

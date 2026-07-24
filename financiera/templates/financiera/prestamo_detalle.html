@@ -24,6 +24,7 @@
         <div><strong>Tasa Interés Anual:</strong> {{ prestamo.tasa_interes_anual }}%</div>
         <div><strong>Plazo:</strong> {{ prestamo.plazo_meses }} meses</div>
         <div><strong>Frecuencia de Pago:</strong> {{ prestamo.get_frecuencia_pago_display }}</div>
+        <div><strong>Tipo de Crédito:</strong> {{ prestamo.get_tipo_credito_display }}</div>
         <div><strong>Destino del Préstamo:</strong> {{ prestamo.get_destino_display }}</div>
         <div><strong>Fecha Solicitud:</strong> {{ prestamo.fecha_solicitud|date:'d/m/Y H:i' }}</div>
         <div><strong>Fecha Aprobación:</strong> {{ prestamo.fecha_aprobacion|date:'d/m/Y H:i'|default:'—' }}</div>
@@ -31,12 +32,17 @@
     </div>
 
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 20px;">
-        <a href="{% url 'financiera:generar_solicitud' prestamo.pk %}" class="btn btn-outline">
+        <button type="button" class="btn btn-outline" id="btn-abrir-modal-solicitud">
             {% include 'partials/_icon.html' with name='file-text' size=16 %}Generar Solicitud
-        </a>
+        </button>
         {% if prestamo.estado == 'PENDIENTE' or prestamo.estado == 'APROBADO' %}
             <a href="{% url 'financiera:generar_contrato' prestamo.pk %}" class="btn btn-dark">
                 {% include 'partials/_icon.html' with name='file-text' size=16 %}Contrato Word
+            </a>
+        {% endif %}
+        {% if prestamo.fecha_desembolso %}
+            <a href="{% url 'financiera:generar_recibo_desembolso' prestamo.pk %}" class="btn btn-outline">
+                {% include 'partials/_icon.html' with name='file-text' size=16 %}Recibo de Desembolso
             </a>
         {% endif %}
 
@@ -129,4 +135,66 @@
     </div>
 </div>
 {% endif %}
+
+<div class="modal-overlay" id="modal-solicitud">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Generar Solicitud de Crédito</h3>
+            <button type="button" class="modal-close" id="modal-solicitud-cerrar" aria-label="Cerrar">&times;</button>
+        </div>
+        <form method="POST" action="{% url 'financiera:generar_solicitud' prestamo.pk %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p class="subsection-note">¿Cómo firmará el solicitante esta solicitud?</p>
+            <div class="radio-row" style="margin-bottom: 14px;">
+                <label><input type="radio" name="tipo_firma" value="manual" checked> Firma manual</label>
+                <label><input type="radio" name="tipo_firma" value="digital"> Firma digital</label>
+            </div>
+            <div class="field" id="campo-firma-imagen" style="display:none;">
+                <label for="firma_imagen">Imagen de la firma (fondo blanco)</label>
+                <input type="file" id="firma_imagen" name="firma_imagen" accept="image/*">
+                <span class="hint">Sube una foto o escaneo de la firma sobre un fondo blanco; el sistema quitará el fondo automáticamente.</span>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 10px;">
+                <button type="button" class="btn btn-outline" id="modal-solicitud-cancelar">Cancelar</button>
+                <button type="submit" class="btn btn-accent">Generar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var modal = document.getElementById('modal-solicitud');
+        var abrir = document.getElementById('btn-abrir-modal-solicitud');
+        var cerrar = document.getElementById('modal-solicitud-cerrar');
+        var cancelar = document.getElementById('modal-solicitud-cancelar');
+        var radios = document.querySelectorAll('input[name="tipo_firma"]');
+        var campoImagen = document.getElementById('campo-firma-imagen');
+        var inputImagen = document.getElementById('firma_imagen');
+
+        function actualizarCampoImagen() {
+            var digital = document.querySelector('input[name="tipo_firma"]:checked').value === 'digital';
+            campoImagen.style.display = digital ? 'flex' : 'none';
+            inputImagen.required = digital;
+        }
+
+        function abrirModal() { modal.classList.add('open'); }
+        function cerrarModal() { modal.classList.remove('open'); }
+
+        if (abrir) abrir.addEventListener('click', abrirModal);
+        if (cerrar) cerrar.addEventListener('click', cerrarModal);
+        if (cancelar) cancelar.addEventListener('click', cerrarModal);
+        if (modal) {
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) cerrarModal();
+            });
+        }
+        radios.forEach(function (radio) {
+            radio.addEventListener('change', actualizarCampoImagen);
+        });
+        actualizarCampoImagen();
+    });
+</script>
 {% endblock %}

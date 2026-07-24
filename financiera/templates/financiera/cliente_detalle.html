@@ -8,66 +8,198 @@
             <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='user' size=16 %}</span>
             {{ cliente.nombre_completo }}
         </div>
-        <a href="{% url 'financiera:cliente_editar' cliente.pk %}" class="btn btn-outline">
-            {% include 'partials/_icon.html' with name='edit' size=16 %}Editar
-        </a>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="{% url 'financiera:clientes_lista' %}" class="btn btn-outline btn-small">
+                {% include 'partials/_icon.html' with name='arrow-left' size=14 %}Volver a Clientes
+            </a>
+            <a href="{% url 'financiera:prestamo_crear' %}" class="btn btn-outline btn-small">
+                {% include 'partials/_icon.html' with name='plus' size=14 %}Solicitar Crédito
+            </a>
+            <a href="{% url 'financiera:cliente_editar' cliente.pk %}" class="btn btn-outline btn-small">
+                {% include 'partials/_icon.html' with name='edit' size=14 %}Editar
+            </a>
+        </div>
     </div>
+</div>
 
+<div class="card">
     <p class="form-section-title">1. Identificación Personal</p>
-    <div class="grid-2">
-        <div><strong>Tipo / No. Identificación:</strong> {{ cliente.get_tipo_identificacion_display }} — {{ cliente.numero_identificacion }}</div>
-        <div><strong>Fecha / lugar de nacimiento:</strong> {{ cliente.fecha_nacimiento }} — {{ cliente.lugar_nacimiento }}</div>
-        <div><strong>Género:</strong> {{ cliente.get_genero_display }}</div>
-        <div><strong>Nacionalidad:</strong> {{ cliente.get_nacionalidad_display }}</div>
-        <div class="span-2"><strong>Profesión / Ocupación / Oficio:</strong> {{ cliente.profesion_ocupacion_oficio }}</div>
+    <div class="grid-3">
+        <div class="info-item">
+            <span class="info-label">Tipo de Identificación</span>
+            <span class="info-value">{{ cliente.get_tipo_identificacion_display }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">No. de Identificación</span>
+            <span class="info-value">{{ cliente.numero_identificacion }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Género</span>
+            <span class="info-value">{{ cliente.get_genero_display }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Nacionalidad</span>
+            <span class="info-value">{{ cliente.get_nacionalidad_display }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Fecha de Nacimiento</span>
+            <span class="info-value">{{ cliente.fecha_nacimiento }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Lugar de Nacimiento</span>
+            <span class="info-value">{{ cliente.lugar_nacimiento }}</span>
+        </div>
+        <div class="info-item span-3">
+            <span class="info-label">Profesión / Ocupación / Oficio</span>
+            <span class="info-value">{{ cliente.profesion_ocupacion_oficio }}</span>
+        </div>
     </div>
+</div>
 
-    <p class="form-section-title" style="margin-top: 18px;">2. Contacto y Domicilio</p>
-    <div class="grid-2">
-        <div><strong>Teléfono fijo / Celular:</strong> {{ cliente.telefono_fijo|default:'—' }} / {{ cliente.celular }}</div>
-        <div><strong>E-mail personal:</strong> {{ cliente.email_personal|default:'—' }}</div>
-        <div class="span-2"><strong>Dirección:</strong> {{ cliente.direccion_completa }}</div>
-        <div><strong>Punto de referencia:</strong> {{ cliente.punto_referencia|default:'—' }}</div>
+<div class="card">
+    <p class="form-section-title">2. Contacto y Domicilio</p>
+    <div class="grid-3">
+        <div class="info-item">
+            <span class="info-label">Teléfono Fijo</span>
+            <span class="info-value {% if not cliente.telefono_fijo %}muted{% endif %}">{{ cliente.telefono_fijo|default:'—' }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Celular</span>
+            <span class="info-value">{{ cliente.celular }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">E-mail Personal</span>
+            <span class="info-value {% if not cliente.email_personal %}muted{% endif %}">{{ cliente.email_personal|default:'—' }}</span>
+        </div>
+        <div class="info-item span-3">
+            <span class="info-label">Dirección</span>
+            <span class="info-value">{{ cliente.direccion_completa }}</span>
+        </div>
+        <div class="info-item span-3">
+            <span class="info-label">Punto de Referencia</span>
+            <span class="info-value {% if not cliente.punto_referencia %}muted{% endif %}">{{ cliente.punto_referencia|default:'—' }}</span>
+        </div>
     </div>
+</div>
 
-    <p class="form-section-title" style="margin-top: 18px;">3. Estado Civil y Familia</p>
-    <div class="grid-2">
-        <div><strong>Estado civil:</strong> {{ cliente.get_estado_civil_display }}</div>
-        <div><strong>No. de dependientes:</strong> {{ cliente.numero_dependientes }}</div>
-        {% if cliente.nombre_conyuge %}
-        <div><strong>Cónyuge:</strong> {{ cliente.nombre_conyuge }}</div>
-        <div><strong>Tel. cónyuge:</strong> {{ cliente.conyuge_telefono_fijo|default:'—' }} / {{ cliente.conyuge_celular|default:'—' }}</div>
-        <div><strong>Empresa del cónyuge:</strong> {{ cliente.conyuge_empresa|default:'—' }}</div>
+<div class="card">
+    <p class="form-section-title">3. Estado Civil y Familia</p>
+    <div class="grid-3">
+        <div class="info-item">
+            <span class="info-label">Estado Civil</span>
+            <span class="info-value">{{ cliente.get_estado_civil_display }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">No. de Dependientes</span>
+            <span class="info-value">{{ cliente.numero_dependientes }}</span>
+        </div>
+    </div>
+    {% if cliente.nombre_conyuge %}
+    <p class="subsection-note" style="margin-top: 16px;"><strong>Datos del cónyuge</strong></p>
+    <div class="grid-3">
+        <div class="info-item">
+            <span class="info-label">Nombre del Cónyuge</span>
+            <span class="info-value">{{ cliente.nombre_conyuge }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Teléfono / Celular Cónyuge</span>
+            <span class="info-value">{{ cliente.conyuge_telefono_fijo|default:'—' }} / {{ cliente.conyuge_celular|default:'—' }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Empresa del Cónyuge</span>
+            <span class="info-value {% if not cliente.conyuge_empresa %}muted{% endif %}">{{ cliente.conyuge_empresa|default:'—' }}</span>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <p class="form-section-title">4. Referencias Personales</p>
+    <div class="grid-3">
+        <div class="info-item">
+            <span class="info-label">Referencia 1 — Nombre</span>
+            <span class="info-value">{{ cliente.ref1_nombre }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Referencia 1 — Celular</span>
+            <span class="info-value">{{ cliente.ref1_celular }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Referencia 1 — Teléfono Fijo</span>
+            <span class="info-value {% if not cliente.ref1_telefono_fijo %}muted{% endif %}">{{ cliente.ref1_telefono_fijo|default:'—' }}</span>
+        </div>
+        {% if cliente.ref2_nombre %}
+        <div class="info-item">
+            <span class="info-label">Referencia 2 — Nombre</span>
+            <span class="info-value">{{ cliente.ref2_nombre }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Referencia 2 — Celular</span>
+            <span class="info-value">{{ cliente.ref2_celular|default:'—' }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Referencia 2 — Teléfono Fijo</span>
+            <span class="info-value {% if not cliente.ref2_telefono_fijo %}muted{% endif %}">{{ cliente.ref2_telefono_fijo|default:'—' }}</span>
+        </div>
         {% endif %}
     </div>
+</div>
 
-    <p class="form-section-title" style="margin-top: 18px;">4. Referencias Personales</p>
-    <div class="grid-2">
-        <div><strong>Referencia 1:</strong> {{ cliente.ref1_nombre }} — {{ cliente.ref1_celular }}{% if cliente.ref1_telefono_fijo %} / {{ cliente.ref1_telefono_fijo }}{% endif %}</div>
-        <div><strong>Referencia 2:</strong> {{ cliente.ref2_nombre }} — {{ cliente.ref2_celular }}{% if cliente.ref2_telefono_fijo %} / {{ cliente.ref2_telefono_fijo }}{% endif %}</div>
-    </div>
-
-    <p class="form-section-title" style="margin-top: 18px;">5. Información Profesional y Laboral</p>
-    <div class="grid-2">
-        <div><strong>Empresa:</strong> {{ cliente.empresa_nombre }} ({{ cliente.get_tipo_empresa_display }})</div>
-        <div><strong>Tipo de empleado:</strong> {{ cliente.get_tipo_empleado_display }}</div>
-        <div><strong>Cargo actual:</strong> {{ cliente.cargo_actual }}</div>
-        <div><strong>Ingreso / años laborando:</strong> {{ cliente.empresa_fecha_ingreso }} — {{ cliente.empresa_anios_laborando }} años</div>
-        <div><strong>Tel. / E-mail laboral:</strong> {{ cliente.empresa_telefono }} / {{ cliente.empresa_email|default:'—' }}</div>
-        <div class="span-2"><strong>Dirección de la empresa:</strong> {{ cliente.empresa_direccion }}, {{ cliente.empresa_ciudad }}, {{ cliente.empresa_municipio }}, {{ cliente.empresa_departamento }}</div>
-        <div><strong>Jefe inmediato:</strong> {{ cliente.jefe_inmediato_nombre|default:'—' }}</div>
-        <div><strong>Gerente / RRHH:</strong> {{ cliente.gerente_rrhh_nombre|default:'—' }}</div>
-        <div><strong>Rango de Salario:</strong> {{ cliente.get_rango_salario_display }}</div>
-        <div><strong>Asesor Asignado:</strong> {{ cliente.asesor|default:'—' }}</div>
-    </div>
-
-    <div style="display:flex; gap:16px; margin-top: 20px;">
-        <a href="{% url 'financiera:clientes_lista' %}" class="btn btn-outline btn-small">
-            {% include 'partials/_icon.html' with name='arrow-left' size=14 %}Volver a Clientes
-        </a>
-        <a href="{% url 'financiera:prestamo_crear' %}" class="btn btn-outline btn-small">
-            {% include 'partials/_icon.html' with name='plus' size=14 %}Solicitar Crédito
-        </a>
+<div class="card">
+    <p class="form-section-title">5. Información Profesional y Laboral</p>
+    <div class="grid-3">
+        <div class="info-item">
+            <span class="info-label">Empresa</span>
+            <span class="info-value">{{ cliente.empresa_nombre }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Tipo de Empresa</span>
+            <span class="info-value">{{ cliente.get_tipo_empresa_display }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Tipo de Empleado</span>
+            <span class="info-value">{{ cliente.get_tipo_empleado_display }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Cargo Actual</span>
+            <span class="info-value">{{ cliente.cargo_actual }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Fecha de Ingreso</span>
+            <span class="info-value">{{ cliente.empresa_fecha_ingreso }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Años Laborando</span>
+            <span class="info-value">{{ cliente.empresa_anios_laborando }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Teléfono Laboral</span>
+            <span class="info-value">{{ cliente.empresa_telefono }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">E-mail Laboral</span>
+            <span class="info-value {% if not cliente.empresa_email %}muted{% endif %}">{{ cliente.empresa_email|default:'—' }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Jefe Inmediato</span>
+            <span class="info-value {% if not cliente.jefe_inmediato_nombre %}muted{% endif %}">{{ cliente.jefe_inmediato_nombre|default:'—' }}</span>
+        </div>
+        <div class="info-item span-3">
+            <span class="info-label">Dirección de la Empresa</span>
+            <span class="info-value">{{ cliente.empresa_direccion }}, {{ cliente.empresa_ciudad }}, {{ cliente.empresa_municipio }}, {{ cliente.empresa_departamento }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Gerente / RRHH</span>
+            <span class="info-value {% if not cliente.gerente_rrhh_nombre %}muted{% endif %}">{{ cliente.gerente_rrhh_nombre|default:'—' }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Rango de Salario</span>
+            <span class="info-value">{{ cliente.get_rango_salario_display }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Asesor Asignado</span>
+            <span class="info-value {% if not cliente.asesor %}muted{% endif %}">{{ cliente.asesor|default:'—' }}</span>
+        </div>
     </div>
 </div>
 

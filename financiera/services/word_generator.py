@@ -1,19 +1,32 @@
 """Generación automática de documentos Word (docxtpl) de un Préstamo:
-contrato de crédito (con tabla de amortización) y solicitud de crédito
-(expediente KYC del cliente + datos del préstamo)."""
+contrato de crédito (con tabla de amortización), solicitud de crédito
+(expediente KYC del cliente + datos del préstamo) y recibo de desembolso."""
 from io import BytesIO
 from pathlib import Path
 
 from django.core.files.base import ContentFile
+from docx import Document as DocumentoWord
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Cm
 from docxtpl import DocxTemplate
 
 from financiera.models import Cliente, Prestamo
 from financiera.services.amortizacion import generar_tabla_amortizacion
 
+TEXTO_FIRMA_SOLICITANTE = 'FIRMA DEL SOLICITANTE'
+
 PLANTILLA_PATH = Path(__file__).resolve().parent.parent / 'templates_docx' / 'contrato_credito.docx'
 PLANTILLA_SOLICITUD_PATH = (
     Path(__file__).resolve().parent.parent / 'templates_docx' / 'PLANTILLA_SOLICITUD_DE_CREDITO.docx'
 )
+PLANTILLA_RECIBO_DESEMBOLSO_PATH = (
+    Path(__file__).resolve().parent.parent / 'templates_docx' / 'RECIBO_DE_DESEMBOLSO.docx'
+)
+
+_MESES_ES = {
+    1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio',
+    7: 'Julio', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre',
+}
 
 # Mapas "valor del modelo -> nombre del checkbox en la plantilla de solicitud".
 _DESTINO_A_CHK = {
@@ -140,10 +153,45 @@ def generar_contrato(prestamo):
     return prestamo.documento_contrato
 
 
-def generar_solicitud_credito(prestamo):
+def _insertar_firma_digital(buffer_docx, imagen_firma):
+    """Abre el .docx ya renderizado e inserta la imagen de la firma (PNG con
+    fondo transparente) en un párrafo nuevo, justo encima del texto "FIRMA
+    DEL SOLICITANTE". La celda de la tabla donde vive ese texto está
+    fusionada a lo ancho de toda la fila, así que `fila.cells` repite la
+    misma celda una vez por columna cubierta -- se descartan los duplicados
+    con `vistas` para no insertar la imagen varias veces."""
+    documento = DocumentoWord(buffer_docx)
+    # OJO: se descarta por el elemento `_tc` en sí, no por id(_tc) -- lxml crea
+    # un proxy Python efímero en cada acceso, así que id(_tc) puede reciclarse
+    # entre columnas distintas y romper el descarte de duplicados.
+    vistas = set()
+    for tabla in documento.tables:
+        for fila in tabla.rows:
+            for celda in fila.cells:
+                if celda._tc in vistas:
+                    continue
+                vistas.add(celda._tc)
+                for parrafo in celda.paragraphs:
+                    if parrafo.text.strip().upper() == TEXTO_FIRMA_SOLICITANTE:
+                        nuevo_parrafo = parrafo.insert_paragraph_before()
+                        nuevo_parrafo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        nuevo_parrafo.add_run().add_picture(imagen_firma, height=Cm(2.2))
+
+    salida = BytesIO()
+    documento.save(salida)
+    salida.seek(0)
+    return salida
+
+
+def generar_solicitud_credito(prestamo, imagen_firma=None):
     """Rellena la plantilla oficial de Solicitud de Crédito con los datos del
     préstamo y el expediente KYC del cliente. Devuelve un BytesIO listo para
-    descargar (no se persiste en el modelo, se genera al vuelo)."""
+    descargar (no se persiste en el modelo, se genera al vuelo).
+
+    `imagen_firma` (BytesIO opcional) es la imagen de firma digital ya
+    procesada (fondo blanco eliminado); si se recibe, se inserta sobre el
+    texto "FIRMA DEL SOLICITANTE". Si es None, la solicitud se genera igual
+    que antes, para que el firmante la imprima y la firme a mano."""
     if not PLANTILLA_SOLICITUD_PATH.exists():
         raise FileNotFoundError('No existe la plantilla de solicitud de crédito.')
 
@@ -217,15 +265,47 @@ def generar_solicitud_credito(prestamo):
         'ingreso_mensual': '',
         **_marcar(_RANGO_SALARIO_A_CHK, cliente.rango_salario),
 
-        # Ciudad donde se firma: no se recolecta aparte, se usa municipio y
-        # departamento del cliente (ej. "Comayagua, Comayagua").
-        'ciudad_firma': f'{cliente.municipio}, {cliente.departamento}',
+        # Ciudad donde se firma: siempre la sede de la institución, no depende
+        # del cliente.
+        'ciudad_firma': 'El Rosario, Comayagua',
 
         **_CAMPOS_NO_RECOLECTADOS,
     }
     contexto = _con_sangria(contexto)
 
     documento = DocxTemplate(str(PLANTILLA_SOLICITUD_PATH))
+    documento.render(contexto)
+
+    buffer = BytesIO()
+    documento.save(buffer)
+    buffer.seek(0)
+
+    if imagen_firma is not None:
+        buffer = _insertar_firma_digital(buffer, imagen_firma)
+
+    return buffer
+
+
+def generar_recibo_desembolso(prestamo):
+    """Rellena la plantilla oficial de Recibo de Desembolso con los datos
+    del préstamo ya desembolsado. Devuelve un BytesIO listo para descargar
+    (no se persiste en el modelo, se genera al vuelo)."""
+    if not PLANTILLA_RECIBO_DESEMBOLSO_PATH.exists():
+        raise FileNotFoundError('No existe la plantilla de recibo de desembolso.')
+    if not prestamo.fecha_desembolso:
+        raise ValueError('El préstamo todavía no ha sido desembolsado.')
+
+    fecha = prestamo.fecha_desembolso
+    contexto = {
+        'cliente_nombre': prestamo.cliente.nombre_completo,
+        'cliente_dni': prestamo.cliente.numero_identificacion,
+        'monto_desembolsado': f'{prestamo.monto_solicitado:,.2f}',
+        'dia_desembolso': fecha.day,
+        'mes_desembolso': _MESES_ES[fecha.month],
+        'anio_desembolso': fecha.year,
+    }
+
+    documento = DocxTemplate(str(PLANTILLA_RECIBO_DESEMBOLSO_PATH))
     documento.render(contexto)
 
     buffer = BytesIO()

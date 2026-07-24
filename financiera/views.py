@@ -3,11 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.http import FileResponse
+from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import ClienteForm, PagoCuotaForm, PrestamoForm
+from .forms import ClienteForm, FirmaSolicitudForm, PagoCuotaForm, PrestamoForm
 from .models import Cliente, CuotaAmortizacion, Prestamo
 from .permisos import requiere_permiso
 from .services.mora import actualizar_estados_mora
@@ -62,6 +62,20 @@ def cliente_editar(request, pk):
 def cliente_detalle(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     return render(request, 'financiera/cliente_detalle.html', {'cliente': cliente})
+
+
+@login_required
+def validar_cliente_dni(request):
+    """Valida al vuelo (AJAX) si existe un cliente con el No. de identificación
+    dado, para que el asesor confirme que es la persona correcta antes de
+    enviar la solicitud de crédito."""
+    numero = request.GET.get('dni', '').strip()
+    if not numero:
+        return JsonResponse({'encontrado': False})
+    cliente = Cliente.objects.filter(numero_identificacion=numero).first()
+    if cliente is None:
+        return JsonResponse({'encontrado': False})
+    return JsonResponse({'encontrado': True, 'nombre': cliente.nombre_completo})
 
 
 @login_required
@@ -161,9 +175,22 @@ def generar_contrato_view(request, pk):
 @login_required
 def generar_solicitud_view(request, pk):
     prestamo = get_object_or_404(Prestamo.objects.select_related('cliente'), pk=pk)
+    from .services.firma import limpiar_firma_digital
     from .services.word_generator import generar_solicitud_credito
+
+    imagen_firma = None
+    if request.method == 'POST':
+        form = FirmaSolicitudForm(request.POST, request.FILES)
+        if not form.is_valid():
+            for errores in form.errors.values():
+                for error in errores:
+                    messages.error(request, error)
+            return redirect('financiera:prestamo_detalle', pk=pk)
+        if form.cleaned_data['tipo_firma'] == FirmaSolicitudForm.TIPO_FIRMA_DIGITAL:
+            imagen_firma = limpiar_firma_digital(form.cleaned_data['firma_imagen'])
+
     try:
-        buffer = generar_solicitud_credito(prestamo)
+        buffer = generar_solicitud_credito(prestamo, imagen_firma=imagen_firma)
     except FileNotFoundError as exc:
         messages.error(request, str(exc))
         return redirect('financiera:prestamo_detalle', pk=pk)
@@ -171,6 +198,22 @@ def generar_solicitud_view(request, pk):
         buffer,
         as_attachment=True,
         filename=f'Solicitud_{prestamo.codigo_credito}.docx',
+    )
+
+
+@login_required
+def generar_recibo_desembolso_view(request, pk):
+    prestamo = get_object_or_404(Prestamo.objects.select_related('cliente'), pk=pk)
+    from .services.word_generator import generar_recibo_desembolso
+    try:
+        buffer = generar_recibo_desembolso(prestamo)
+    except (FileNotFoundError, ValueError) as exc:
+        messages.error(request, str(exc))
+        return redirect('financiera:prestamo_detalle', pk=pk)
+    return FileResponse(
+        buffer,
+        as_attachment=True,
+        filename=f'Recibo_Desembolso_{prestamo.codigo_credito}.docx',
     )
 
 

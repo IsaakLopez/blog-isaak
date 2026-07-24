@@ -629,7 +629,22 @@ table.data-table a.link:hover { text-decoration: underline; }
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
 }
 .span-2 { grid-column: span 2; }
-@media (max-width: 700px) { .span-2 { grid-column: span 1; } }
+.span-3 { grid-column: span 3; }
+.span-4 { grid-column: span 4; }
+@media (max-width: 700px) { .span-2, .span-3, .span-4 { grid-column: span 1; } }
+
+/* ---------- Info items (vistas de detalle: label arriba, valor abajo) ---------- */
+
+.info-item { display: flex; flex-direction: column; gap: 3px; }
+.info-item .info-label {
+    font-size: .74rem;
+    font-weight: 700;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+.info-item .info-value { font-size: .92rem; color: var(--text); }
+.info-item .info-value.muted { color: var(--text-faint); }
 
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
 .field label { font-size: .82rem; font-weight: 600; color: var(--text-muted); }
@@ -692,6 +707,47 @@ input:focus, select:focus, textarea:focus {
 .alert-success { background: var(--accent-bg); color: var(--accent-text); }
 .alert-error { background: var(--danger-bg); color: var(--danger-text); }
 .alert-info { background: var(--info-bg); color: var(--info-text); }
+
+/* ---------- Modal ---------- */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 20, 20, .45);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+
+.modal-box {
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-pop);
+    padding: 22px;
+    width: 100%;
+    max-width: 440px;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+.modal-header h3 { font-size: 1.05rem; margin: 0; }
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0;
+}
+.modal-close:hover { color: var(--text); }
 
 /* ---------- Footer ---------- */
 

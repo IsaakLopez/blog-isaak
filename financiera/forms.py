@@ -52,6 +52,17 @@ class ClienteForm(forms.ModelForm):
             self.fields[nombre_campo].choices = getattr(Cliente, f'{nombre_campo.upper()}_CHOICES')
 
 
+# Tasas fijas que la institución maneja hoy; se muestran como lista para
+# evitar que se ingresen valores fuera de lo permitido.
+TASA_INTERES_CHOICES = [
+    ('5', '5%'),
+    ('4.5', '4.5%'),
+    ('4', '4%'),
+    ('3.5', '3.5%'),
+    ('3', '3%'),
+]
+
+
 class PrestamoForm(forms.ModelForm):
     numero_identificacion_cliente = forms.CharField(
         label='No. de Identificación del Cliente', max_length=20,
@@ -60,14 +71,22 @@ class PrestamoForm(forms.ModelForm):
 
     class Meta:
         model = Prestamo
-        fields = ['monto_solicitado', 'tasa_interes_anual', 'plazo_meses', 'frecuencia_pago', 'destino']
-        widgets = {'destino': forms.RadioSelect}
+        fields = ['monto_solicitado', 'tasa_interes_anual', 'plazo_meses', 'frecuencia_pago', 'tipo_credito', 'destino']
+        widgets = {
+            'destino': forms.RadioSelect,
+            'tipo_credito': forms.RadioSelect,
+            'tasa_interes_anual': forms.Select(choices=TASA_INTERES_CHOICES),
+        }
 
-    field_order = ['numero_identificacion_cliente', 'monto_solicitado', 'tasa_interes_anual', 'plazo_meses', 'frecuencia_pago', 'destino']
+    field_order = [
+        'numero_identificacion_cliente', 'monto_solicitado', 'tasa_interes_anual',
+        'plazo_meses', 'frecuencia_pago', 'tipo_credito', 'destino',
+    ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['destino'].choices = Prestamo.DESTINO_CHOICES
+        self.fields['tipo_credito'].choices = Prestamo.TIPO_CREDITO_CHOICES
         self.order_fields(self.field_order)
 
     def clean_numero_identificacion_cliente(self):
@@ -92,3 +111,26 @@ class PrestamoForm(forms.ModelForm):
 class PagoCuotaForm(forms.Form):
     monto = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0.01, label='Monto a pagar')
     numero_comprobante = forms.CharField(max_length=30, required=False, label='N° de comprobante externo (opcional)')
+
+
+class FirmaSolicitudForm(forms.Form):
+    TIPO_FIRMA_MANUAL = 'manual'
+    TIPO_FIRMA_DIGITAL = 'digital'
+    TIPO_FIRMA_CHOICES = [
+        (TIPO_FIRMA_MANUAL, 'Firma manual'),
+        (TIPO_FIRMA_DIGITAL, 'Firma digital'),
+    ]
+
+    tipo_firma = forms.ChoiceField(
+        choices=TIPO_FIRMA_CHOICES, widget=forms.RadioSelect, initial=TIPO_FIRMA_MANUAL,
+    )
+    firma_imagen = forms.ImageField(
+        required=False, label='Imagen de la firma (fondo blanco)',
+        error_messages={'invalid_image': 'El archivo no es una imagen válida.'},
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('tipo_firma') == self.TIPO_FIRMA_DIGITAL and not cleaned_data.get('firma_imagen'):
+            self.add_error('firma_imagen', 'Debes subir una imagen de la firma para la firma digital.')
+        return cleaned_data

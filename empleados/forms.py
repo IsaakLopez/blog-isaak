@@ -5,6 +5,10 @@ from django.core.exceptions import ValidationError
 
 from .models import Empleado
 
+# Por ahora la institución solo tiene una sucursal; se deja como lista para
+# facilitar agregar más adelante sin cambiar el formulario.
+SUCURSAL_CHOICES = [('Principal', 'Principal')]
+
 
 class EmpleadoCreateForm(forms.Form):
     username = forms.CharField(max_length=150, label='Usuario')
@@ -16,7 +20,7 @@ class EmpleadoCreateForm(forms.Form):
     cargo = forms.ChoiceField(choices=Empleado.CARGO_CHOICES)
     telefono = forms.CharField(max_length=20, required=False)
     correo = forms.EmailField(required=False)
-    sucursal = forms.CharField(max_length=100, required=False)
+    sucursal = forms.ChoiceField(choices=SUCURSAL_CHOICES, required=False, initial='Principal')
     activo = forms.BooleanField(required=False, initial=True, label='Estado Activo')
 
     def clean_username(self):
@@ -68,6 +72,7 @@ class EmpleadoEditForm(forms.ModelForm):
     class Meta:
         model = Empleado
         fields = ['nombre', 'apellido', 'dni', 'cargo', 'telefono', 'correo', 'sucursal', 'activo']
+        widgets = {'sucursal': forms.Select(choices=SUCURSAL_CHOICES)}
 
 
 class ResetPasswordForm(forms.Form):
