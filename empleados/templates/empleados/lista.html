@@ -1,72 +1,75 @@
 {% extends 'base.html' %}
-{% block title %}Lista de Empleados · MicroFinanzas Pro{% endblock %}
+{% block title %}Lista de Empleados · Portal IMFDC{% endblock %}
 
 {% block content %}
 <div class="card">
-    <div class="card-content">
-        <div class="row valign-wrapper" style="margin-bottom: 0;">
-            <div class="col s8">
-                <span class="card-title indigo-text text-darken-4"><i class="material-icons left">people</i>Personal Registrado</span>
-            </div>
-            {% if request.user.empleado.cargo == 'ADMIN' %}
-            <div class="col s4 right-align">
-                <a href="{% url 'empleado_crear' %}" class="waves-effect waves-light btn teal darken-2">
-                    <i class="material-icons left">person_add</i>Nuevo Empleado
-                </a>
-            </div>
-            {% endif %}
+    <div class="card-actions-row">
+        <div class="card-title" style="margin-bottom: 0;">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='users' size=16 %}</span>
+            Personal Registrado
         </div>
-
-        {% if empleados %}
-            <table class="highlight responsive-table">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Apellido</th>
-                        <th>DNI</th>
-                        <th>Cargo</th>
-                        <th>Sucursal</th>
-                        <th>Estado</th>
-                        {% if request.user.empleado.cargo == 'ADMIN' %}<th>Acciones</th>{% endif %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for emp in empleados %}
-                        <tr>
-                            <td>{{ emp.nombre }}</td>
-                            <td>{{ emp.apellido }}</td>
-                            <td>{{ emp.dni|default:'—' }}</td>
-                            <td>{{ emp.get_cargo_display }}</td>
-                            <td>{{ emp.sucursal|default:'—' }}</td>
-                            <td>
-                                {% if emp.activo %}
-                                    <span class="new badge teal" data-badge-caption="Activo"></span>
-                                {% else %}
-                                    <span class="new badge red" data-badge-caption="Inactivo"></span>
-                                {% endif %}
-                            </td>
-                            {% if request.user.empleado.cargo == 'ADMIN' %}
-                            <td>
-                                <a href="{% url 'empleado_editar' emp.pk %}" class="waves-effect waves-light btn-small indigo darken-3">
-                                    <i class="material-icons left">edit</i>Editar
-                                </a>
-                                {% if emp.user %}
-                                <a href="{% url 'empleado_resetear_password' emp.pk %}" class="waves-effect waves-light btn-small grey darken-1">
-                                    <i class="material-icons left">lock_reset</i>Contraseña
-                                </a>
-                                {% endif %}
-                            </td>
-                            {% endif %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>No hay empleados registrados aún.</p>
+        {% if request.user.empleado.cargo == 'ADMIN' %}
+        <a href="{% url 'empleado_crear' %}" class="btn btn-dark">
+            {% include 'partials/_icon.html' with name='plus' size=16 %}Nuevo Empleado
+        </a>
         {% endif %}
     </div>
-    <div class="card-action">
-        <a href="{% url 'home' %}" class="waves-effect waves-light btn indigo darken-4"><i class="material-icons left">home</i>Volver al Inicio</a>
-    </div>
+
+    <form method="GET" class="search-form">
+        <span class="search-icon">{% include 'partials/_icon.html' with name='search' size=16 %}</span>
+        <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre, apellido o DNI...">
+    </form>
+
+    {% if empleados %}
+        <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>DNI</th>
+                    <th>Cargo</th>
+                    <th>Sucursal</th>
+                    <th>Estado</th>
+                    {% if request.user.empleado.cargo == 'ADMIN' %}<th>Acciones</th>{% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in empleados %}
+                    <tr>
+                        <td>{{ emp.nombre }}</td>
+                        <td>{{ emp.apellido }}</td>
+                        <td>{{ emp.dni|default:'—' }}</td>
+                        <td>{{ emp.get_cargo_display }}</td>
+                        <td>{{ emp.sucursal|default:'—' }}</td>
+                        <td>
+                            {% if emp.activo %}
+                                <span class="badge badge-success">Activo</span>
+                            {% else %}
+                                <span class="badge badge-danger">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        {% if request.user.empleado.cargo == 'ADMIN' %}
+                        <td>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <a href="{% url 'empleado_editar' emp.pk %}" class="btn btn-outline btn-small">
+                                    {% include 'partials/_icon.html' with name='edit' size=14 %}Editar
+                                </a>
+                                {% if emp.user %}
+                                <a href="{% url 'empleado_resetear_password' emp.pk %}" class="btn btn-outline btn-small">
+                                    {% include 'partials/_icon.html' with name='lock' size=14 %}Contraseña
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    {% else %}
+        <p class="empty-state">{% if q %}No se encontraron empleados para "{{ q }}".{% else %}No hay empleados registrados aún.{% endif %}</p>
+    {% endif %}
 </div>
 {% endblock %}

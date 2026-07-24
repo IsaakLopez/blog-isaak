@@ -1,74 +1,78 @@
 {% extends 'base.html' %}
-{% block title %}Créditos · MicroFinanzas Pro{% endblock %}
+{% block title %}Créditos · Portal IMFDC{% endblock %}
 
 {% block content %}
 <div class="card">
-    <div class="card-content">
-        <div class="row valign-wrapper" style="margin-bottom: 0;">
-            <div class="col s8">
-                <span class="card-title indigo-text text-darken-4"><i class="material-icons left">request_quote</i>Solicitudes de Crédito</span>
-            </div>
-            <div class="col s4 right-align">
-                <a href="{% url 'financiera:prestamo_crear' %}" class="waves-effect waves-light btn teal darken-2">
-                    <i class="material-icons left">add</i>Nueva Solicitud
-                </a>
-            </div>
+    <div class="card-actions-row">
+        <div class="card-title" style="margin-bottom: 0;">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='credit-card' size=16 %}</span>
+            Solicitudes de Crédito
         </div>
-
-        <div class="chip {% if not estado_actual %}teal white-text{% endif %}">
-            <a href="{% url 'financiera:prestamos_lista' %}" class="{% if not estado_actual %}white-text{% else %}grey-text text-darken-2{% endif %}">Todos</a>
-        </div>
-        {% for value, label in estados %}
-            <div class="chip {% if estado_actual == value %}teal white-text{% endif %}">
-                <a href="?estado={{ value }}" class="{% if estado_actual == value %}white-text{% else %}grey-text text-darken-2{% endif %}">{{ label }}</a>
-            </div>
-        {% endfor %}
-
-        {% if prestamos %}
-            <table class="highlight responsive-table">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Cliente</th>
-                        <th>Monto</th>
-                        <th>Estado</th>
-                        <th>Fecha Solicitud</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for prestamo in prestamos %}
-                        <tr>
-                            <td><a href="{% url 'financiera:prestamo_detalle' prestamo.pk %}">{{ prestamo.codigo_credito }}</a></td>
-                            <td>{{ prestamo.cliente }}</td>
-                            <td>L {{ prestamo.monto_solicitado }}</td>
-                            <td>
-                                {% if prestamo.estado == 'APROBADO' or prestamo.estado == 'DESEMBOLSADO' or prestamo.estado == 'LIQUIDADO' %}
-                                    <span class="new badge green" data-badge-caption="{{ prestamo.get_estado_display }}"></span>
-                                {% elif prestamo.estado == 'PENDIENTE' or prestamo.estado == 'EN_REVISION' %}
-                                    <span class="new badge orange" data-badge-caption="{{ prestamo.get_estado_display }}"></span>
-                                {% elif prestamo.estado == 'EN_MORA' or prestamo.estado == 'RECHAZADO' or prestamo.estado == 'CANCELADO' %}
-                                    <span class="new badge red" data-badge-caption="{{ prestamo.get_estado_display }}"></span>
-                                {% else %}
-                                    <span class="new badge grey" data-badge-caption="{{ prestamo.get_estado_display }}"></span>
-                                {% endif %}
-                            </td>
-                            <td>{{ prestamo.fecha_solicitud|date:'d/m/Y' }}</td>
-                            <td>
-                                {% if prestamo.estado == 'PENDIENTE' or prestamo.estado == 'APROBADO' %}
-                                    <a href="{% url 'financiera:generar_contrato' prestamo.pk %}" class="waves-effect waves-light btn-small indigo darken-3">
-                                        <i class="material-icons left">description</i>Generar Contrato Word &amp; Imprimir
-                                    </a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% include 'financiera/_paginacion.html' %}
-        {% else %}
-            <p>No hay solicitudes de crédito en este filtro.</p>
-        {% endif %}
+        <a href="{% url 'financiera:prestamo_crear' %}" class="btn btn-dark">
+            {% include 'partials/_icon.html' with name='plus' size=16 %}Nueva Solicitud
+        </a>
     </div>
+
+    <form method="GET" class="search-form">
+        {% if estado_actual %}<input type="hidden" name="estado" value="{{ estado_actual }}">{% endif %}
+        <span class="search-icon">{% include 'partials/_icon.html' with name='search' size=16 %}</span>
+        <input type="search" name="q" value="{{ q }}" placeholder="Buscar por código o cliente...">
+    </form>
+
+    <div class="filter-row">
+        <a href="{% url 'financiera:prestamos_lista' %}{% if q %}?q={{ q }}{% endif %}" class="filter-pill {% if not estado_actual %}active{% endif %}">Todos</a>
+        {% for value, label in estados %}
+            <a href="?estado={{ value }}{% if q %}&q={{ q }}{% endif %}" class="filter-pill {% if estado_actual == value %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
+
+    {% if prestamos %}
+        <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Cliente</th>
+                    <th>Monto</th>
+                    <th>Estado</th>
+                    <th>Fecha Solicitud</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prestamo in prestamos %}
+                    <tr>
+                        <td><a class="link" href="{% url 'financiera:prestamo_detalle' prestamo.pk %}">{{ prestamo.codigo_credito }}</a></td>
+                        <td>{{ prestamo.cliente }}</td>
+                        <td>L {{ prestamo.monto_solicitado }}</td>
+                        <td>
+                            {% if prestamo.estado == 'APROBADO' or prestamo.estado == 'DESEMBOLSADO' or prestamo.estado == 'LIQUIDADO' %}
+                                <span class="badge badge-success">{{ prestamo.get_estado_display }}</span>
+                            {% elif prestamo.estado == 'PENDIENTE' or prestamo.estado == 'EN_REVISION' %}
+                                <span class="badge badge-warn">{{ prestamo.get_estado_display }}</span>
+                            {% elif prestamo.estado == 'EN_MORA' or prestamo.estado == 'RECHAZADO' or prestamo.estado == 'CANCELADO' %}
+                                <span class="badge badge-danger">{{ prestamo.get_estado_display }}</span>
+                            {% else %}
+                                <span class="badge badge-neutral">{{ prestamo.get_estado_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ prestamo.fecha_solicitud|date:'d/m/Y' }}</td>
+                        <td>
+                            {% if prestamo.estado == 'PENDIENTE' or prestamo.estado == 'APROBADO' %}
+                                <a href="{% url 'financiera:generar_contrato' prestamo.pk %}" class="btn btn-outline btn-small">
+                                    {% include 'partials/_icon.html' with name='file-text' size=14 %}Contrato Word
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% include 'financiera/_paginacion.html' %}
+    {% else %}
+        <p class="empty-state">No hay solicitudes de crédito en este filtro.</p>
+    {% endif %}
+
 </div>
 {% endblock %}

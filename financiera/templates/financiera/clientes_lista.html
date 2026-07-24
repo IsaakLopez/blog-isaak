@@ -1,47 +1,53 @@
 {% extends 'base.html' %}
-{% block title %}Clientes · MicroFinanzas Pro{% endblock %}
+{% block title %}Clientes · Portal IMFDC{% endblock %}
 
 {% block content %}
 <div class="card">
-    <div class="card-content">
-        <div class="row valign-wrapper" style="margin-bottom: 0;">
-            <div class="col s8">
-                <span class="card-title indigo-text text-darken-4"><i class="material-icons left">people</i>Clientes / Socios</span>
-            </div>
-            <div class="col s4 right-align">
-                <a href="{% url 'financiera:cliente_crear' %}" class="waves-effect waves-light btn teal darken-2">
-                    <i class="material-icons left">person_add</i>Nuevo Cliente
-                </a>
-            </div>
+    <div class="card-actions-row">
+        <div class="card-title" style="margin-bottom: 0;">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='users' size=16 %}</span>
+            Clientes / Socios
         </div>
-
-        {% if clientes %}
-            <table class="highlight responsive-table">
-                <thead>
-                    <tr>
-                        <th>No. Identificación</th>
-                        <th>Nombre</th>
-                        <th>Actividad Económica</th>
-                        <th>Ingresos Mensuales</th>
-                        <th>Asesor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for cliente in clientes %}
-                        <tr>
-                            <td><a href="{% url 'financiera:cliente_detalle' cliente.pk %}">{{ cliente.numero_identificacion }}</a></td>
-                            <td>{{ cliente.nombre_completo }}</td>
-                            <td>{{ cliente.actividad_economica|default:'—' }}</td>
-                            <td>L {{ cliente.ingresos_mensuales }}</td>
-                            <td>{{ cliente.asesor|default:'—' }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% include 'financiera/_paginacion.html' %}
-        {% else %}
-            <p>No hay clientes registrados aún.</p>
-        {% endif %}
+        <a href="{% url 'financiera:cliente_crear' %}" class="btn btn-dark">
+            {% include 'partials/_icon.html' with name='plus' size=16 %}Nuevo Cliente
+        </a>
     </div>
+
+    <form method="GET" class="search-form">
+        <span class="search-icon">{% include 'partials/_icon.html' with name='search' size=16 %}</span>
+        <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nombre o No. de identificación...">
+    </form>
+
+    {% if clientes %}
+        <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Identificador</th>
+                    <th>Cliente</th>
+                    <th>DNI</th>
+                    <th>Teléfono</th>
+                    <th>Asesor</th>
+                    <th>Fecha de Ingreso</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cliente in clientes %}
+                    <tr>
+                        <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+                        <td><a class="link" href="{% url 'financiera:cliente_detalle' cliente.pk %}">{{ cliente.nombre_completo }}</a></td>
+                        <td>{{ cliente.numero_identificacion }}</td>
+                        <td>{{ cliente.celular|default:'—' }}</td>
+                        <td>{{ cliente.asesor|default:'—' }}</td>
+                        <td>{{ cliente.created_at|date:'d/m/Y' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% include 'financiera/_paginacion.html' %}
+    {% else %}
+        <p class="empty-state">{% if q %}No se encontraron clientes para "{{ q }}".{% else %}No hay clientes registrados aún.{% endif %}</p>
+    {% endif %}
 </div>
 {% endblock %}

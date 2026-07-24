@@ -1,97 +1,97 @@
 {% extends 'base.html' %}
-{% block title %}{% if modo == 'editar' %}Editar Empleado{% else %}Nuevo Empleado{% endif %} · MicroFinanzas Pro{% endblock %}
+{% block title %}{% if modo == 'editar' %}Editar Empleado{% else %}Nuevo Empleado{% endif %} · Portal IMFDC{% endblock %}
 
 {% block content %}
-<h4 class="indigo-text text-darken-4">
-    <i class="material-icons left">badge</i>
-    {% if modo == 'editar' %}Editar Empleado{% else %}Nueva Cuenta de Empleado{% endif %}
-</h4>
+<div class="page-header">
+    <h1>{% if modo == 'editar' %}Editar Empleado{% else %}Nueva Cuenta de Empleado{% endif %}</h1>
+</div>
 
 {% if form.non_field_errors %}
-    <div class="card-panel red lighten-4 red-text text-darken-4">{{ form.non_field_errors }}</div>
+    <div class="alert alert-error">{{ form.non_field_errors }}</div>
 {% endif %}
 
 <div class="card">
-    <div class="card-content">
-        <form method="POST">
-            {% csrf_token %}
-            <div class="row" style="margin-bottom: 0;">
-                {% if modo == 'crear' %}
-                    <div class="input-field col s12 m6">
-                        {{ form.username }}
-                        <label for="{{ form.username.id_for_label }}" class="active">Usuario</label>
-                        {% if form.username.errors %}<span class="red-text">{{ form.username.errors|join:', ' }}</span>{% endif %}
-                    </div>
-                    <div class="col s12 m6"></div>
-                    <div class="input-field col s12 m6">
-                        {{ form.password1 }}
-                        <label for="{{ form.password1.id_for_label }}" class="active">Contraseña</label>
-                        {% if form.password1.errors %}<span class="red-text">{{ form.password1.errors|join:', ' }}</span>{% endif %}
-                    </div>
-                    <div class="input-field col s12 m6">
-                        {{ form.password2 }}
-                        <label for="{{ form.password2.id_for_label }}" class="active">Confirmar contraseña</label>
-                        {% if form.password2.errors %}<span class="red-text">{{ form.password2.errors|join:', ' }}</span>{% endif %}
-                    </div>
-                {% else %}
-                    <div class="col s12">
-                        <p><strong>Usuario:</strong> {{ empleado.user.username|default:'— (sin cuenta vinculada)' }}</p>
-                    </div>
-                {% endif %}
+    <form method="POST">
+        {% csrf_token %}
+        <div class="grid-2">
+            {% if modo == 'crear' %}
+                <div class="field">
+                    <label for="{{ form.username.id_for_label }}">Usuario</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}<span class="field-error">{{ form.username.errors|join:', ' }}</span>{% endif %}
+                </div>
+                <div></div>
+                <div class="field">
+                    <label for="{{ form.password1.id_for_label }}">Contraseña</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}<span class="field-error">{{ form.password1.errors|join:', ' }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ form.password2.id_for_label }}">Confirmar contraseña</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}<span class="field-error">{{ form.password2.errors|join:', ' }}</span>{% endif %}
+                </div>
+            {% else %}
+                <div class="field span-2">
+                    <label>Usuario</label>
+                    <p style="margin: 6px 0 0; font-weight: 600;">{{ empleado.user.username|default:'— (sin cuenta vinculada)' }}</p>
+                </div>
+            {% endif %}
 
-                <div class="input-field col s12 m6">
-                    {{ form.nombre }}
-                    <label for="{{ form.nombre.id_for_label }}" class="active">Nombre</label>
-                    {% if form.nombre.errors %}<span class="red-text">{{ form.nombre.errors|join:', ' }}</span>{% endif %}
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.apellido }}
-                    <label for="{{ form.apellido.id_for_label }}" class="active">Apellido</label>
-                    {% if form.apellido.errors %}<span class="red-text">{{ form.apellido.errors|join:', ' }}</span>{% endif %}
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.dni }}
-                    <label for="{{ form.dni.id_for_label }}" class="active">DNI</label>
-                    {% if form.dni.errors %}<span class="red-text">{{ form.dni.errors|join:', ' }}</span>{% endif %}
-                </div>
-                <div class="input-field col s12 m6">
-                    <select name="{{ form.cargo.html_name }}" id="{{ form.cargo.id_for_label }}">
-                        {% for value, label in form.fields.cargo.choices %}
-                            <option value="{{ value }}" {% if form.cargo.value == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                    <label>Cargo</label>
-                    <span class="grey-text">El cargo define a qué módulos y acciones tiene acceso.</span>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.telefono }}
-                    <label for="{{ form.telefono.id_for_label }}" class="active">Teléfono</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.correo }}
-                    <label for="{{ form.correo.id_for_label }}" class="active">Correo</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.sucursal }}
-                    <label for="{{ form.sucursal.id_for_label }}" class="active">Sucursal</label>
-                </div>
-                <div class="col s12" style="margin-top: 10px;">
-                    <label>
-                        {{ form.activo }}
-                        <span>Estado Activo (si se desmarca, el empleado no podrá iniciar sesión)</span>
-                    </label>
-                </div>
+            <div class="field">
+                <label for="{{ form.nombre.id_for_label }}">Nombre</label>
+                {{ form.nombre }}
+                {% if form.nombre.errors %}<span class="field-error">{{ form.nombre.errors|join:', ' }}</span>{% endif %}
             </div>
+            <div class="field">
+                <label for="{{ form.apellido.id_for_label }}">Apellido</label>
+                {{ form.apellido }}
+                {% if form.apellido.errors %}<span class="field-error">{{ form.apellido.errors|join:', ' }}</span>{% endif %}
+            </div>
+            <div class="field">
+                <label for="{{ form.dni.id_for_label }}">DNI</label>
+                {{ form.dni }}
+                {% if form.dni.errors %}<span class="field-error">{{ form.dni.errors|join:', ' }}</span>{% endif %}
+            </div>
+            <div class="field">
+                <label for="{{ form.cargo.id_for_label }}">Cargo</label>
+                <select name="{{ form.cargo.html_name }}" id="{{ form.cargo.id_for_label }}">
+                    {% for value, label in form.fields.cargo.choices %}
+                        <option value="{{ value }}" {% if form.cargo.value == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                <span class="hint">El cargo define a qué módulos y acciones tiene acceso.</span>
+            </div>
+            <div class="field">
+                <label for="{{ form.telefono.id_for_label }}">Teléfono</label>
+                {{ form.telefono }}
+            </div>
+            <div class="field">
+                <label for="{{ form.correo.id_for_label }}">Correo</label>
+                {{ form.correo }}
+            </div>
+            <div class="field">
+                <label for="{{ form.sucursal.id_for_label }}">Sucursal</label>
+                {{ form.sucursal }}
+            </div>
+            <div class="field span-2 checkbox-row">
+                <label>
+                    {{ form.activo }}
+                    <span>Estado Activo (si se desmarca, el empleado no podrá iniciar sesión)</span>
+                </label>
+            </div>
+        </div>
 
-            <button type="submit" class="waves-effect waves-light btn teal darken-2" style="margin-top: 16px;">
-                <i class="material-icons left">save</i>Guardar
+        <div style="display:flex; gap:10px; margin-top: 18px; flex-wrap: wrap;">
+            <button type="submit" class="btn btn-accent">
+                {% include 'partials/_icon.html' with name='check' size=16 %}Guardar
             </button>
             {% if modo == 'editar' %}
-                <a href="{% url 'empleado_resetear_password' empleado.pk %}" class="waves-effect waves-light btn indigo darken-3" style="margin-top: 16px;">
-                    <i class="material-icons left">lock_reset</i>Resetear Contraseña
+                <a href="{% url 'empleado_resetear_password' empleado.pk %}" class="btn btn-outline">
+                    {% include 'partials/_icon.html' with name='lock' size=16 %}Resetear Contraseña
                 </a>
             {% endif %}
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 {% endblock %}

@@ -184,6 +184,19 @@ class Prestamo(models.Model):
         (FRECUENCIA_MENSUAL, 'Mensual'),
     ]
 
+    DESTINO_MEJORAS = 'MEJORAS'
+    DESTINO_PAGO_DEUDA = 'PAGO_DEUDA'
+    DESTINO_COLEGIATURA = 'COLEGIATURA'
+    DESTINO_GASTOS_MEDICOS = 'GASTOS_MEDICOS'
+    DESTINO_CONSUMO = 'CONSUMO'
+    DESTINO_CHOICES = [
+        (DESTINO_MEJORAS, 'Mejoras'),
+        (DESTINO_PAGO_DEUDA, 'Pago de deuda'),
+        (DESTINO_COLEGIATURA, 'Pago de colegiatura'),
+        (DESTINO_GASTOS_MEDICOS, 'Gastos médicos'),
+        (DESTINO_CONSUMO, 'Consumo'),
+    ]
+
     ESTADO_PENDIENTE = 'PENDIENTE'
     ESTADO_EN_REVISION = 'EN_REVISION'
     ESTADO_APROBADO = 'APROBADO'
@@ -236,6 +249,7 @@ class Prestamo(models.Model):
     tasa_interes_anual = models.DecimalField(max_digits=5, decimal_places=2, validators=[VALOR_NO_NEGATIVO])
     plazo_meses = models.PositiveIntegerField(validators=[MinValueValidator(1, message='Debe ser al menos 1 mes.')])
     frecuencia_pago = models.CharField(max_length=15, choices=FRECUENCIA_CHOICES, default=FRECUENCIA_MENSUAL)
+    destino = models.CharField('Destino del préstamo', max_length=20, choices=DESTINO_CHOICES)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_PENDIENTE)
 
     fecha_solicitud = models.DateTimeField(auto_now_add=True)

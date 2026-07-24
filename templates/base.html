@@ -1,76 +1,119 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MicroFinanzas Pro{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
-          integrity="sha512-UJfAaOlIRtdR+0P6C3KUoTDAxVTuy3lnSXLyLKlHYJlcSU8Juge/mjeaxDNMlw9LgeIotgz5FP8eUQPhX1q10A=="
-          crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>{% block title %}Portal IMFDC{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
     {% block extra_head %}{% endblock %}
 </head>
-<body class="grey lighten-4" style="display: flex; min-height: 100vh; flex-direction: column;">
+<body>
 
-    <nav class="indigo darken-4">
-        <div class="nav-wrapper container">
-            <a href="{% url 'home' %}" class="brand-logo">
-                <i class="material-icons left">account_balance</i>MicroFinanzas Pro
-            </a>
-            <a href="#" data-target="mobile-nav" class="sidenav-trigger"><i class="material-icons">menu</i></a>
-            {% if user.is_authenticated %}
-            <ul id="nav-desktop" class="right hide-on-med-and-down">
-                <li><a href="{% url 'home' %}">Inicio</a></li>
-                <li><a href="{% url 'financiera:clientes_lista' %}">Clientes</a></li>
-                <li><a href="{% url 'financiera:prestamos_lista' %}">Créditos</a></li>
-                <li><a href="{% url 'lista' %}">Empleados</a></li>
-                <li><a href="/admin/">Administración</a></li>
-                <li><a href="{% url 'logout' %}"><i class="material-icons left">exit_to_app</i>Salir</a></li>
-            </ul>
-            {% endif %}
-        </div>
+{% if user.is_authenticated %}
+<header class="topbar">
+    <div class="brand">
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Abrir menú">
+            {% include 'partials/_icon.html' with name='menu' size=20 %}
+        </button>
+        <span class="icon-badge">{% include 'partials/_icon.html' with name='shield' size=18 %}</span>
+        Portal IMFDC
+    </div>
+
+    <nav class="nav-pill">
+        <a href="{% url 'home' %}" class="{% if request.path == '/' %}active{% endif %}">Inicio</a>
+        <a href="{% url 'financiera:clientes_lista' %}" class="{% if '/financiera/clientes' in request.path %}active{% endif %}">Clientes</a>
+        <a href="{% url 'financiera:prestamos_lista' %}" class="{% if '/financiera/prestamos' in request.path %}active{% endif %}">Créditos</a>
+        <a href="{% url 'lista' %}" class="{% if '/empleados/' in request.path %}active{% endif %}">Empleados</a>
     </nav>
 
-    {% if user.is_authenticated %}
-    <ul class="sidenav" id="mobile-nav">
-        <li><a href="{% url 'home' %}">Inicio</a></li>
-        <li><a href="{% url 'financiera:clientes_lista' %}">Clientes</a></li>
-        <li><a href="{% url 'financiera:prestamos_lista' %}">Créditos</a></li>
-        <li><a href="{% url 'lista' %}">Empleados</a></li>
-        <li><a href="/admin/">Administración</a></li>
-        <li><a href="{% url 'logout' %}">Salir</a></li>
-    </ul>
-    {% endif %}
+    <div class="topbar-right">
+        <span class="icon-btn" title="Notificaciones">{% include 'partials/_icon.html' with name='bell' size=18 %}</span>
 
-    <main class="container" style="flex: 1 0 auto; margin-top: 24px; margin-bottom: 24px;">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="card-panel {% if message.tags == 'error' %}red lighten-4 red-text text-darken-4{% elif message.tags == 'success' %}teal lighten-4 teal-text text-darken-4{% else %}blue lighten-4 blue-text text-darken-4{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        {% block content %}{% endblock %}
-    </main>
-
-    <footer class="page-footer indigo darken-4">
-        <div class="footer-copyright">
-            <div class="container white-text center-align">
-                MicroFinanzas Pro — Desarrollado por <a class="teal-text text-lighten-2" href="https://isaak.net" target="_blank">Isaak.net</a>
+        <div class="user-menu">
+            <button type="button" class="user-trigger" id="user-trigger">
+                <span class="user-avatar">{% include 'partials/_icon.html' with name='user' size=20 %}</span>
+                <span class="user-info">
+                    <span class="name">{% if request.user.empleado %}{{ request.user.empleado.nombre }} {{ request.user.empleado.apellido }}{% else %}{{ request.user.username }}{% endif %}</span>
+                    <span class="role">{% if request.user.empleado %}{{ request.user.empleado.get_cargo_display }}{% else %}Administrador{% endif %}</span>
+                </span>
+                <span class="user-chevron">{% include 'partials/_icon.html' with name='chevron-down' size=16 %}</span>
+            </button>
+            <div class="user-dropdown" id="user-dropdown">
+                {% if not request.user.empleado or request.user.empleado.cargo == 'ADMIN' %}
+                <a href="/admin/">
+                    {% include 'partials/_icon.html' with name='shield' size=16 %}
+                    Administración
+                </a>
+                {% else %}
+                <a href="{% url 'cambiar_mi_password' %}">
+                    {% include 'partials/_icon.html' with name='lock' size=16 %}
+                    Cambiar contraseña
+                </a>
+                {% endif %}
+                <form method="POST" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit">
+                        {% include 'partials/_icon.html' with name='logout' size=16 %}
+                        Cerrar sesión
+                    </button>
+                </form>
             </div>
         </div>
-    </footer>
+    </div>
+</header>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"
-            integrity="sha512-NiWqa2rceHnN3Z5j6mSAvbwwg3tiwVNxiAQaaSMSXnRRDh5C2mk/+sKQRw8qjV1vN4nf8iK2a0b048PnHbyx+Q=="
-            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            M.Sidenav.init(document.querySelectorAll('.sidenav'));
-            M.FormSelect.init(document.querySelectorAll('select'));
-        });
-    </script>
-    {% block extra_scripts %}{% endblock %}
+<nav class="mobile-nav" id="mobile-nav">
+    <a href="{% url 'home' %}" class="{% if request.path == '/' %}active{% endif %}">Inicio</a>
+    <a href="{% url 'financiera:clientes_lista' %}" class="{% if '/financiera/clientes' in request.path %}active{% endif %}">Clientes</a>
+    <a href="{% url 'financiera:prestamos_lista' %}" class="{% if '/financiera/prestamos' in request.path %}active{% endif %}">Créditos</a>
+    <a href="{% url 'lista' %}" class="{% if '/empleados/' in request.path %}active{% endif %}">Empleados</a>
+</nav>
+{% endif %}
+
+<main class="page-shell">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+    Portal IMFDC &mdash; Desarrollado por <a href="https://isaak.net" target="_blank">Isaak.net</a>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var navToggle = document.getElementById('nav-toggle');
+        var mobileNav = document.getElementById('mobile-nav');
+        if (navToggle && mobileNav) {
+            navToggle.addEventListener('click', function () {
+                mobileNav.classList.toggle('open');
+            });
+        }
+
+        var userTrigger = document.getElementById('user-trigger');
+        var userDropdown = document.getElementById('user-dropdown');
+        if (userTrigger && userDropdown) {
+            userTrigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                userDropdown.classList.toggle('open');
+            });
+            document.addEventListener('click', function (e) {
+                if (!userDropdown.contains(e.target)) {
+                    userDropdown.classList.remove('open');
+                }
+            });
+        }
+    });
+</script>
+{% block extra_scripts %}{% endblock %}
 </body>
 </html>

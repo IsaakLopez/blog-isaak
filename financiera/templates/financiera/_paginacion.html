@@ -1,21 +1,23 @@
 {% if page_obj.paginator.num_pages > 1 %}
-<ul class="pagination center-align">
+<div class="pagination-row">
     {% if page_obj.has_previous %}
-        <li class="waves-effect"><a href="?page={{ page_obj.previous_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}"><i class="material-icons">chevron_left</i></a></li>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{% include 'partials/_icon.html' with name='arrow-left' size=14 %}</a>
     {% else %}
-        <li class="disabled"><a href="#!"><i class="material-icons">chevron_left</i></a></li>
+        <span class="disabled">{% include 'partials/_icon.html' with name='arrow-left' size=14 %}</span>
     {% endif %}
 
     {% for numero in page_obj.paginator.page_range %}
-        <li class="{% if numero == page_obj.number %}active teal{% endif %}">
-            <a href="?page={{ numero }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">{{ numero }}</a>
-        </li>
+        {% if numero == page_obj.number %}
+            <span class="active">{{ numero }}</span>
+        {% else %}
+            <a href="?page={{ numero }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ numero }}</a>
+        {% endif %}
     {% endfor %}
 
     {% if page_obj.has_next %}
-        <li class="waves-effect"><a href="?page={{ page_obj.next_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}"><i class="material-icons">chevron_right</i></a></li>
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" style="transform: rotate(180deg);">{% include 'partials/_icon.html' with name='arrow-left' size=14 %}</a>
     {% else %}
-        <li class="disabled"><a href="#!"><i class="material-icons">chevron_right</i></a></li>
+        <span class="disabled" style="transform: rotate(180deg);">{% include 'partials/_icon.html' with name='arrow-left' size=14 %}</span>
     {% endif %}
-</ul>
+</div>
 {% endif %}

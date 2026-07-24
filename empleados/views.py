@@ -1,14 +1,63 @@
+from datetime import date
+
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.core.mail import send_mail
-from django.db.models import Sum
+from django.db.models import Q, Sum
+from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404, redirect, render
 
-from financiera.models import Cliente, Prestamo
+from financiera.models import Cliente, CuotaAmortizacion, Prestamo, TransaccionCaja
 from financiera.services.mora import actualizar_estados_mora
 from .forms import EmpleadoCreateForm, EmpleadoEditForm, ResetPasswordForm
 from .models import Empleado
 from .permisos import requiere_admin
+
+MESES_ABREV = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+
+def _movimientos_mensuales():
+    """Últimos 6 meses de desembolsos vs. cobros, para las barras del panel
+    gerencial. Se calcula en el servidor (agregación + % de altura) para no
+    depender de ninguna librería de gráficos en el front."""
+    primer_dia_mes_actual = date.today().replace(day=1)
+    meses = []
+    for i in range(5, -1, -1):
+        mes = primer_dia_mes_actual.month - i
+        anio = primer_dia_mes_actual.year
+        while mes <= 0:
+            mes += 12
+            anio -= 1
+        meses.append((anio, mes))
+
+    inicio_rango = date(meses[0][0], meses[0][1], 1)
+    totales = (
+        TransaccionCaja.objects.filter(fecha_hora__date__gte=inicio_rango)
+        .annotate(mes=TruncMonth('fecha_hora'))
+        .values('mes', 'tipo_movimiento')
+        .annotate(total=Sum('monto_pagado'))
+    )
+    mapa = {}
+    for fila in totales:
+        clave = (fila['mes'].year, fila['mes'].month)
+        mapa.setdefault(clave, {}).__setitem__(fila['tipo_movimiento'], float(fila['total'] or 0))
+
+    filas = []
+    for anio, mes in meses:
+        datos = mapa.get((anio, mes), {})
+        filas.append({
+            'label': MESES_ABREV[mes - 1],
+            'desembolsos': datos.get(TransaccionCaja.TIPO_DESEMBOLSO, 0),
+            'cobros': datos.get(TransaccionCaja.TIPO_PAGO_CUOTA, 0),
+        })
+
+    maximo = max([f['desembolsos'] for f in filas] + [f['cobros'] for f in filas] + [1])
+    for f in filas:
+        f['pct_desembolsos'] = round(f['desembolsos'] / maximo * 100) if maximo else 0
+        f['pct_cobros'] = round(f['cobros'] / maximo * 100) if maximo else 0
+    return filas
 
 
 def _notificar_credenciales(empleado, password):
@@ -19,10 +68,10 @@ def _notificar_credenciales(empleado, password):
         return False
     try:
         send_mail(
-            subject='Tu cuenta en MicroFinanzas Pro',
+            subject='Tu cuenta en Portal IMFDC',
             message=(
                 f'Hola {empleado.nombre},\n\n'
-                f'Se creó tu cuenta de acceso a MicroFinanzas Pro con cargo "{empleado.get_cargo_display()}".\n\n'
+                f'Se creó tu cuenta de acceso a Portal IMFDC con cargo "{empleado.get_cargo_display()}".\n\n'
                 f'Usuario: {empleado.user.username}\n'
                 f'Contraseña: {password}\n\n'
                 'Por seguridad, cambia tu contraseña apenas puedas pidiéndole al '
@@ -55,18 +104,36 @@ def home(request):
 
     personal_activo = Empleado.objects.filter(activo=True).count()
 
+    empleado = getattr(request.user, 'empleado', None)
+
+    proximos_vencimientos = (
+        CuotaAmortizacion.objects
+        .filter(estado_cuota__in=[CuotaAmortizacion.ESTADO_PENDIENTE, CuotaAmortizacion.ESTADO_PAGADO_PARCIAL])
+        .select_related('prestamo__cliente')
+        .order_by('fecha_vencimiento')[:5]
+    )
+
     return render(request, 'empleados/home.html', {
         'cartera_activa': cartera_activa,
         'numero_socios': numero_socios,
         'indice_mora': indice_mora,
         'personal_activo': personal_activo,
+        'movimientos_mensuales': _movimientos_mensuales(),
+        'proximos_vencimientos': proximos_vencimientos,
+        'puede_crear_cliente': bool(empleado and empleado.tiene_permiso('crear_cliente')),
+        'puede_crear_credito': bool(empleado and empleado.tiene_permiso('crear_credito')),
     })
 
 
 @login_required
 def lista_empleados(request):
+    q = request.GET.get('q', '').strip()
     empleados = Empleado.objects.all() # Trae todos los empleados de la DB
-    return render(request, 'empleados/lista.html', {'empleados': empleados})
+    if q:
+        empleados = empleados.filter(
+            Q(nombre__icontains=q) | Q(apellido__icontains=q) | Q(dni__icontains=q)
+        )
+    return render(request, 'empleados/lista.html', {'empleados': empleados, 'q': q})
 
 
 @requiere_admin
@@ -120,3 +187,17 @@ def empleado_resetear_password(request, pk):
     else:
         form = ResetPasswordForm()
     return render(request, 'empleados/empleado_resetear_password.html', {'form': form, 'empleado': empleado})
+
+
+@login_required
+def cambiar_mi_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, request.user)
+            messages.success(request, 'Tu contraseña se actualizó correctamente.')
+            return redirect('home')
+    else:
+        form = PasswordChangeForm(user=request.user)
+    return render(request, 'empleados/cambiar_password.html', {'form': form})

@@ -1,83 +1,141 @@
 {% extends 'base.html' %}
-{% block title %}Panel Principal · MicroFinanzas Pro{% endblock %}
+{% block title %}Panel Principal · Portal IMFDC{% endblock %}
 
 {% block content %}
-<h4 class="indigo-text text-darken-4">
-    <i class="material-icons left">dashboard</i>Panel Gerencial
-</h4>
-
-<div class="row">
-    <div class="col s12 m6 l3">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title grey-text text-darken-1" style="font-size: 0.9rem;">Cartera Activa</span>
-                <h5 class="teal-text text-darken-2">L {{ cartera_activa|floatformat:2 }}</h5>
-            </div>
-        </div>
+<div class="page-header">
+    <div>
+        <h1>Bienvenido{% if request.user.empleado %}, {{ request.user.empleado.nombre }}{% endif %} 👋</h1>
+        <p class="subtitle">Resumen de cartera, socios y desempeño del sistema.</p>
     </div>
-    <div class="col s12 m6 l3">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title grey-text text-darken-1" style="font-size: 0.9rem;">Número de Socios</span>
-                <h5 class="indigo-text text-darken-3">{{ numero_socios }}</h5>
-            </div>
-        </div>
-    </div>
-    <div class="col s12 m6 l3">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title grey-text text-darken-1" style="font-size: 0.9rem;">Índice de Mora</span>
-                <h5 class="{% if indice_mora > 10 %}red-text text-darken-2{% else %}teal-text text-darken-2{% endif %}">{{ indice_mora|floatformat:1 }}%</h5>
-            </div>
-        </div>
-    </div>
-    <div class="col s12 m6 l3">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title grey-text text-darken-1" style="font-size: 0.9rem;">Personal Activo</span>
-                <h5 class="indigo-text text-darken-3">{{ personal_activo }}</h5>
-            </div>
-        </div>
+    <div class="page-header-actions">
+        {% if puede_crear_cliente %}
+        <a href="{% url 'financiera:cliente_crear' %}" class="btn btn-outline">
+            {% include 'partials/_icon.html' with name='plus' size=16 %}Nuevo Cliente
+        </a>
+        {% endif %}
+        {% if puede_crear_credito %}
+        <a href="{% url 'financiera:prestamo_crear' %}" class="btn btn-dark">
+            {% include 'partials/_icon.html' with name='plus' size=16 %}Nuevo Crédito
+        </a>
+        {% endif %}
     </div>
 </div>
 
-<h5 class="indigo-text text-darken-4" style="margin-top: 32px;">Módulos del Sistema</h5>
-<div class="row">
-    <div class="col s12 m6 l4">
-        <div class="card hoverable">
-            <div class="card-content">
-                <span class="new badge teal" data-badge-caption="ACTIVO"></span>
-                <span class="card-title"><i class="material-icons left">people</i>Clientes / Socios</span>
-                <p>Registro y expediente socioeconómico (KYC) de clientes.</p>
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span>Cartera Activa</span>
+            <span class="stat-card-icon">{% include 'partials/_icon.html' with name='cash' size=17 %}</span>
+        </div>
+        <div class="stat-value">L {{ cartera_activa|floatformat:2 }}</div>
+        <div class="stat-caption">Desembolsada y en mora</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span>Número de Socios</span>
+            <span class="stat-card-icon">{% include 'partials/_icon.html' with name='users' size=17 %}</span>
+        </div>
+        <div class="stat-value">{{ numero_socios }}</div>
+        <div class="stat-caption">Clientes registrados</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span>Índice de Mora</span>
+            <span class="stat-card-icon">{% include 'partials/_icon.html' with name='trending-up' size=17 %}</span>
+        </div>
+        <div class="stat-value">{{ indice_mora|floatformat:1 }}%</div>
+        <div class="stat-caption">Sobre cartera activa/cerrada</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-top">
+            <span>Personal Activo</span>
+            <span class="stat-card-icon">{% include 'partials/_icon.html' with name='briefcase' size=17 %}</span>
+        </div>
+        <div class="stat-value">{{ personal_activo }}</div>
+        <div class="stat-caption">Empleados con acceso</div>
+    </div>
+</div>
+
+<div class="dash-grid">
+    <div class="card">
+        <div class="card-title">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='dashboard' size=16 %}</span>
+            Desembolsos y Cobros
+        </div>
+        <div class="chart-legend">
+            <span><span class="dot" style="background: var(--neutral-text); opacity:.35;"></span>Desembolsos</span>
+            <span><span class="dot" style="background: var(--accent-solid);"></span>Cobros</span>
+        </div>
+        <div class="bar-chart">
+            {% for fila in movimientos_mensuales %}
+            <div class="bar-chart-col">
+                <div class="bar desembolso" style="height: {{ fila.pct_desembolsos }}%;" title="Desembolsos: L {{ fila.desembolsos|floatformat:2 }}"></div>
+                <div class="bar cobro" style="height: {{ fila.pct_cobros }}%;" title="Cobros: L {{ fila.cobros|floatformat:2 }}"></div>
             </div>
-            <div class="card-action">
-                <a href="{% url 'financiera:clientes_lista' %}" class="teal-text">Ver clientes</a>
-            </div>
+            {% endfor %}
+        </div>
+        <div class="bar-chart-labels">
+            {% for fila in movimientos_mensuales %}
+            <span>{{ fila.label }}</span>
+            {% endfor %}
         </div>
     </div>
-    <div class="col s12 m6 l4">
-        <div class="card hoverable">
-            <div class="card-content">
-                <span class="new badge teal" data-badge-caption="ACTIVO"></span>
-                <span class="card-title"><i class="material-icons left">request_quote</i>Créditos</span>
-                <p>Solicitud, análisis, aprobación, desembolso y cobro de créditos.</p>
-            </div>
-            <div class="card-action">
-                <a href="{% url 'financiera:prestamos_lista' %}" class="teal-text">Ver créditos</a>
-            </div>
+
+    <div class="card">
+        <div class="card-title">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='clock' size=16 %}</span>
+            Próximos Vencimientos
         </div>
+        {% if proximos_vencimientos %}
+        <div class="list-rows">
+            {% for cuota in proximos_vencimientos %}
+            <div class="list-row">
+                <span class="list-row-icon">{% include 'partials/_icon.html' with name='calendar' size=18 %}</span>
+                <div>
+                    <div class="list-row-title">{{ cuota.prestamo.cliente }}</div>
+                    <div class="list-row-sub">{{ cuota.prestamo.codigo_credito }} — Cuota {{ cuota.numero_cuota }}</div>
+                </div>
+                <div class="list-row-value">
+                    L {{ cuota.monto_total_cuota|floatformat:2 }}
+                    <small>Vence {{ cuota.fecha_vencimiento|date:'d/m/Y' }}</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-state">No hay cuotas próximas a vencer.</p>
+        {% endif %}
     </div>
-    <div class="col s12 m6 l4">
-        <div class="card hoverable">
-            <div class="card-content">
-                <span class="new badge teal" data-badge-caption="ACTIVO"></span>
-                <span class="card-title"><i class="material-icons left">badge</i>Personal</span>
-                <p>Gestión de empleados, cargos y sucursales.</p>
-            </div>
-            <div class="card-action">
-                <a href="{% url 'lista' %}" class="teal-text">Ver empleados</a>
-            </div>
+</div>
+
+<h5 style="margin: 28px 0 14px;">Módulos del Sistema</h5>
+<div class="module-grid">
+    <div class="module-card">
+        <div class="module-card-head">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='users' size=16 %}</span>
+            <strong>Clientes / Socios</strong>
+            <span class="badge badge-success" style="margin-left: auto;">Activo</span>
         </div>
+        <p>Registro y expediente socioeconómico (KYC) de clientes.</p>
+        <a href="{% url 'financiera:clientes_lista' %}" class="btn btn-outline btn-small">Ver clientes</a>
+    </div>
+    <div class="module-card">
+        <div class="module-card-head">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='credit-card' size=16 %}</span>
+            <strong>Créditos</strong>
+            <span class="badge badge-success" style="margin-left: auto;">Activo</span>
+        </div>
+        <p>Solicitud, análisis, aprobación, desembolso y cobro de créditos.</p>
+        <a href="{% url 'financiera:prestamos_lista' %}" class="btn btn-outline btn-small">Ver créditos</a>
+    </div>
+    <div class="module-card">
+        <div class="module-card-head">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='briefcase' size=16 %}</span>
+            <strong>Personal</strong>
+            <span class="badge badge-success" style="margin-left: auto;">Activo</span>
+        </div>
+        <p>Gestión de empleados, cargos y sucursales.</p>
+        <a href="{% url 'lista' %}" class="btn btn-outline btn-small">Ver empleados</a>
     </div>
 </div>
 {% endblock %}

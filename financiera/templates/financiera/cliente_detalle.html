@@ -1,98 +1,99 @@
 {% extends 'base.html' %}
-{% block title %}{{ cliente.nombre_completo }} · MicroFinanzas Pro{% endblock %}
+{% block title %}{{ cliente.nombre_completo }} · Portal IMFDC{% endblock %}
 
 {% block content %}
 <div class="card">
-    <div class="card-content">
-        <div class="row valign-wrapper" style="margin-bottom: 0;">
-            <div class="col s8">
-                <span class="card-title indigo-text text-darken-4">
-                    <i class="material-icons left">person</i>{{ cliente.nombre_completo }}
-                </span>
-            </div>
-            <div class="col s4 right-align">
-                <a href="{% url 'financiera:cliente_editar' cliente.pk %}" class="waves-effect waves-light btn indigo darken-3">
-                    <i class="material-icons left">edit</i>Editar
-                </a>
-            </div>
+    <div class="card-actions-row">
+        <div class="card-title" style="margin-bottom: 0;">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='user' size=16 %}</span>
+            {{ cliente.nombre_completo }}
         </div>
-
-        <h6 class="teal-text text-darken-2">1. Identificación Personal</h6>
-        <div class="row" style="margin-bottom: 0;">
-            <div class="col s12 m6"><strong>Tipo / No. Identificación:</strong> {{ cliente.get_tipo_identificacion_display }} — {{ cliente.numero_identificacion }}</div>
-            <div class="col s12 m6"><strong>Fecha / lugar de nacimiento:</strong> {{ cliente.fecha_nacimiento }} — {{ cliente.lugar_nacimiento }}</div>
-            <div class="col s12 m6"><strong>Género:</strong> {{ cliente.get_genero_display }}</div>
-            <div class="col s12 m6"><strong>Nacionalidad:</strong> {{ cliente.get_nacionalidad_display }}</div>
-            <div class="col s12"><strong>Profesión / Ocupación / Oficio:</strong> {{ cliente.profesion_ocupacion_oficio }}</div>
-        </div>
-
-        <h6 class="teal-text text-darken-2">2. Contacto y Domicilio</h6>
-        <div class="row" style="margin-bottom: 0;">
-            <div class="col s12 m6"><strong>Teléfono fijo / Celular:</strong> {{ cliente.telefono_fijo|default:'—' }} / {{ cliente.celular }}</div>
-            <div class="col s12 m6"><strong>E-mail personal:</strong> {{ cliente.email_personal|default:'—' }}</div>
-            <div class="col s12"><strong>Dirección:</strong> {{ cliente.direccion_completa }}</div>
-            <div class="col s12 m6"><strong>Punto de referencia:</strong> {{ cliente.punto_referencia|default:'—' }}</div>
-        </div>
-
-        <h6 class="teal-text text-darken-2">3. Estado Civil y Familia</h6>
-        <div class="row" style="margin-bottom: 0;">
-            <div class="col s12 m6"><strong>Estado civil:</strong> {{ cliente.get_estado_civil_display }}</div>
-            <div class="col s12 m6"><strong>No. de dependientes:</strong> {{ cliente.numero_dependientes }}</div>
-            {% if cliente.nombre_conyuge %}
-            <div class="col s12 m6"><strong>Cónyuge:</strong> {{ cliente.nombre_conyuge }}</div>
-            <div class="col s12 m6"><strong>Tel. cónyuge:</strong> {{ cliente.conyuge_telefono_fijo|default:'—' }} / {{ cliente.conyuge_celular|default:'—' }}</div>
-            <div class="col s12 m6"><strong>Empresa del cónyuge:</strong> {{ cliente.conyuge_empresa|default:'—' }}</div>
-            {% endif %}
-        </div>
-
-        <h6 class="teal-text text-darken-2">4. Referencias Personales</h6>
-        <div class="row" style="margin-bottom: 0;">
-            <div class="col s12 m6"><strong>Referencia 1:</strong> {{ cliente.ref1_nombre }} — {{ cliente.ref1_celular }}{% if cliente.ref1_telefono_fijo %} / {{ cliente.ref1_telefono_fijo }}{% endif %}</div>
-            <div class="col s12 m6"><strong>Referencia 2:</strong> {{ cliente.ref2_nombre }} — {{ cliente.ref2_celular }}{% if cliente.ref2_telefono_fijo %} / {{ cliente.ref2_telefono_fijo }}{% endif %}</div>
-        </div>
-
-        <h6 class="teal-text text-darken-2">5. Información Profesional y Laboral</h6>
-        <div class="row" style="margin-bottom: 0;">
-            <div class="col s12 m6"><strong>Empresa:</strong> {{ cliente.empresa_nombre }} ({{ cliente.get_tipo_empresa_display }})</div>
-            <div class="col s12 m6"><strong>Tipo de empleado:</strong> {{ cliente.get_tipo_empleado_display }}</div>
-            <div class="col s12 m6"><strong>Cargo actual:</strong> {{ cliente.cargo_actual }}</div>
-            <div class="col s12 m6"><strong>Ingreso / años laborando:</strong> {{ cliente.empresa_fecha_ingreso }} — {{ cliente.empresa_anios_laborando }} años</div>
-            <div class="col s12 m6"><strong>Tel. / E-mail laboral:</strong> {{ cliente.empresa_telefono }} / {{ cliente.empresa_email|default:'—' }}</div>
-            <div class="col s12"><strong>Dirección de la empresa:</strong> {{ cliente.empresa_direccion }}, {{ cliente.empresa_ciudad }}, {{ cliente.empresa_municipio }}, {{ cliente.empresa_departamento }}</div>
-            <div class="col s12 m6"><strong>Jefe inmediato:</strong> {{ cliente.jefe_inmediato_nombre|default:'—' }}</div>
-            <div class="col s12 m6"><strong>Gerente / RRHH:</strong> {{ cliente.gerente_rrhh_nombre|default:'—' }}</div>
-        </div>
-
-        <h6 class="teal-text text-darken-2">6. Información Financiera</h6>
-        <div class="row" style="margin-bottom: 0;">
-            <div class="col s12 m6"><strong>Actividad Económica:</strong> {{ cliente.actividad_economica|default:'—' }}</div>
-            <div class="col s12 m6"><strong>Ingreso Mensual:</strong> L {{ cliente.ingresos_mensuales }}</div>
-            <div class="col s12"><strong>Rango de Salario:</strong> {{ cliente.get_rango_salario_display }}</div>
-            <div class="col s12 m6"><strong>Asesor Asignado:</strong> {{ cliente.asesor|default:'—' }}</div>
-        </div>
+        <a href="{% url 'financiera:cliente_editar' cliente.pk %}" class="btn btn-outline">
+            {% include 'partials/_icon.html' with name='edit' size=16 %}Editar
+        </a>
     </div>
-    <div class="card-action">
-        <a href="{% url 'financiera:clientes_lista' %}" class="teal-text">Volver a Clientes</a>
-        <a href="{% url 'financiera:prestamo_crear' %}" class="teal-text">Solicitar Crédito</a>
+
+    <p class="form-section-title">1. Identificación Personal</p>
+    <div class="grid-2">
+        <div><strong>Tipo / No. Identificación:</strong> {{ cliente.get_tipo_identificacion_display }} — {{ cliente.numero_identificacion }}</div>
+        <div><strong>Fecha / lugar de nacimiento:</strong> {{ cliente.fecha_nacimiento }} — {{ cliente.lugar_nacimiento }}</div>
+        <div><strong>Género:</strong> {{ cliente.get_genero_display }}</div>
+        <div><strong>Nacionalidad:</strong> {{ cliente.get_nacionalidad_display }}</div>
+        <div class="span-2"><strong>Profesión / Ocupación / Oficio:</strong> {{ cliente.profesion_ocupacion_oficio }}</div>
+    </div>
+
+    <p class="form-section-title" style="margin-top: 18px;">2. Contacto y Domicilio</p>
+    <div class="grid-2">
+        <div><strong>Teléfono fijo / Celular:</strong> {{ cliente.telefono_fijo|default:'—' }} / {{ cliente.celular }}</div>
+        <div><strong>E-mail personal:</strong> {{ cliente.email_personal|default:'—' }}</div>
+        <div class="span-2"><strong>Dirección:</strong> {{ cliente.direccion_completa }}</div>
+        <div><strong>Punto de referencia:</strong> {{ cliente.punto_referencia|default:'—' }}</div>
+    </div>
+
+    <p class="form-section-title" style="margin-top: 18px;">3. Estado Civil y Familia</p>
+    <div class="grid-2">
+        <div><strong>Estado civil:</strong> {{ cliente.get_estado_civil_display }}</div>
+        <div><strong>No. de dependientes:</strong> {{ cliente.numero_dependientes }}</div>
+        {% if cliente.nombre_conyuge %}
+        <div><strong>Cónyuge:</strong> {{ cliente.nombre_conyuge }}</div>
+        <div><strong>Tel. cónyuge:</strong> {{ cliente.conyuge_telefono_fijo|default:'—' }} / {{ cliente.conyuge_celular|default:'—' }}</div>
+        <div><strong>Empresa del cónyuge:</strong> {{ cliente.conyuge_empresa|default:'—' }}</div>
+        {% endif %}
+    </div>
+
+    <p class="form-section-title" style="margin-top: 18px;">4. Referencias Personales</p>
+    <div class="grid-2">
+        <div><strong>Referencia 1:</strong> {{ cliente.ref1_nombre }} — {{ cliente.ref1_celular }}{% if cliente.ref1_telefono_fijo %} / {{ cliente.ref1_telefono_fijo }}{% endif %}</div>
+        <div><strong>Referencia 2:</strong> {{ cliente.ref2_nombre }} — {{ cliente.ref2_celular }}{% if cliente.ref2_telefono_fijo %} / {{ cliente.ref2_telefono_fijo }}{% endif %}</div>
+    </div>
+
+    <p class="form-section-title" style="margin-top: 18px;">5. Información Profesional y Laboral</p>
+    <div class="grid-2">
+        <div><strong>Empresa:</strong> {{ cliente.empresa_nombre }} ({{ cliente.get_tipo_empresa_display }})</div>
+        <div><strong>Tipo de empleado:</strong> {{ cliente.get_tipo_empleado_display }}</div>
+        <div><strong>Cargo actual:</strong> {{ cliente.cargo_actual }}</div>
+        <div><strong>Ingreso / años laborando:</strong> {{ cliente.empresa_fecha_ingreso }} — {{ cliente.empresa_anios_laborando }} años</div>
+        <div><strong>Tel. / E-mail laboral:</strong> {{ cliente.empresa_telefono }} / {{ cliente.empresa_email|default:'—' }}</div>
+        <div class="span-2"><strong>Dirección de la empresa:</strong> {{ cliente.empresa_direccion }}, {{ cliente.empresa_ciudad }}, {{ cliente.empresa_municipio }}, {{ cliente.empresa_departamento }}</div>
+        <div><strong>Jefe inmediato:</strong> {{ cliente.jefe_inmediato_nombre|default:'—' }}</div>
+        <div><strong>Gerente / RRHH:</strong> {{ cliente.gerente_rrhh_nombre|default:'—' }}</div>
+        <div><strong>Rango de Salario:</strong> {{ cliente.get_rango_salario_display }}</div>
+        <div><strong>Asesor Asignado:</strong> {{ cliente.asesor|default:'—' }}</div>
+    </div>
+
+    <div style="display:flex; gap:16px; margin-top: 20px;">
+        <a href="{% url 'financiera:clientes_lista' %}" class="btn btn-outline btn-small">
+            {% include 'partials/_icon.html' with name='arrow-left' size=14 %}Volver a Clientes
+        </a>
+        <a href="{% url 'financiera:prestamo_crear' %}" class="btn btn-outline btn-small">
+            {% include 'partials/_icon.html' with name='plus' size=14 %}Solicitar Crédito
+        </a>
     </div>
 </div>
 
-<h6 class="indigo-text text-darken-4" style="margin-top: 24px;">Créditos del Cliente</h6>
-<table class="highlight responsive-table">
-    <thead>
-        <tr><th>Código</th><th>Monto</th><th>Estado</th><th>Fecha Solicitud</th></tr>
-    </thead>
-    <tbody>
-        {% for prestamo in cliente.prestamos.all %}
-        <tr>
-            <td><a href="{% url 'financiera:prestamo_detalle' prestamo.pk %}">{{ prestamo.codigo_credito }}</a></td>
-            <td>L {{ prestamo.monto_solicitado }}</td>
-            <td>{{ prestamo.get_estado_display }}</td>
-            <td>{{ prestamo.fecha_solicitud|date:'d/m/Y' }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="4">Este cliente aún no tiene créditos.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="card">
+    <div class="card-title">
+        <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='credit-card' size=16 %}</span>
+        Créditos del Cliente
+    </div>
+    <div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr><th>Código</th><th>Monto</th><th>Estado</th><th>Fecha Solicitud</th></tr>
+        </thead>
+        <tbody>
+            {% for prestamo in cliente.prestamos.all %}
+            <tr>
+                <td><a class="link" href="{% url 'financiera:prestamo_detalle' prestamo.pk %}">{{ prestamo.codigo_credito }}</a></td>
+                <td>L {{ prestamo.monto_solicitado }}</td>
+                <td>{{ prestamo.get_estado_display }}</td>
+                <td>{{ prestamo.fecha_solicitud|date:'d/m/Y' }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="empty-state">Este cliente aún no tiene créditos.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
 {% endblock %}

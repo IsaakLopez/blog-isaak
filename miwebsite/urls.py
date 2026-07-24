@@ -33,6 +33,7 @@ urlpatterns = [
     path('empleados/nuevo/', empleados_views.empleado_crear, name='empleado_crear'),
     path('empleados/<int:pk>/editar/', empleados_views.empleado_editar, name='empleado_editar'),
     path('empleados/<int:pk>/resetear-password/', empleados_views.empleado_resetear_password, name='empleado_resetear_password'),
+    path('cuenta/cambiar-password/', empleados_views.cambiar_mi_password, name='cambiar_mi_password'),
 
     path('financiera/', include('financiera.urls')),
 ]

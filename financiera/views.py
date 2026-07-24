@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
@@ -16,9 +17,16 @@ REGISTROS_POR_PAGINA = 25
 
 @login_required
 def clientes_lista(request):
-    clientes_qs = Cliente.objects.all().order_by('primer_apellido', 'primer_nombre')
+    q = request.GET.get('q', '').strip()
+    clientes_qs = Cliente.objects.select_related('asesor').order_by('primer_apellido', 'primer_nombre')
+    if q:
+        clientes_qs = clientes_qs.filter(
+            Q(primer_nombre__icontains=q) | Q(segundo_nombre__icontains=q) |
+            Q(primer_apellido__icontains=q) | Q(segundo_apellido__icontains=q) |
+            Q(numero_identificacion__icontains=q)
+        )
     page_obj = Paginator(clientes_qs, REGISTROS_POR_PAGINA).get_page(request.GET.get('page'))
-    return render(request, 'financiera/clientes_lista.html', {'clientes': page_obj, 'page_obj': page_obj})
+    return render(request, 'financiera/clientes_lista.html', {'clientes': page_obj, 'page_obj': page_obj, 'q': q})
 
 
 @requiere_permiso('crear_cliente')
@@ -60,15 +68,24 @@ def cliente_detalle(request, pk):
 def prestamos_lista(request):
     actualizar_estados_mora()
     estado = request.GET.get('estado', '')
+    q = request.GET.get('q', '').strip()
     prestamos_qs = Prestamo.objects.select_related('cliente').all()
     if estado:
         prestamos_qs = prestamos_qs.filter(estado=estado)
+    if q:
+        prestamos_qs = prestamos_qs.filter(
+            Q(codigo_credito__icontains=q) |
+            Q(cliente__primer_nombre__icontains=q) | Q(cliente__segundo_nombre__icontains=q) |
+            Q(cliente__primer_apellido__icontains=q) | Q(cliente__segundo_apellido__icontains=q) |
+            Q(cliente__numero_identificacion__icontains=q)
+        )
     page_obj = Paginator(prestamos_qs, REGISTROS_POR_PAGINA).get_page(request.GET.get('page'))
     return render(request, 'financiera/prestamos_lista.html', {
         'prestamos': page_obj,
         'page_obj': page_obj,
         'estado_actual': estado,
         'estados': Prestamo.ESTADO_CHOICES,
+        'q': q,
     })
 
 
@@ -138,6 +155,22 @@ def generar_contrato_view(request, pk):
         prestamo.documento_contrato.open('rb'),
         as_attachment=True,
         filename=f'{prestamo.codigo_credito}.docx',
+    )
+
+
+@login_required
+def generar_solicitud_view(request, pk):
+    prestamo = get_object_or_404(Prestamo.objects.select_related('cliente'), pk=pk)
+    from .services.word_generator import generar_solicitud_credito
+    try:
+        buffer = generar_solicitud_credito(prestamo)
+    except FileNotFoundError as exc:
+        messages.error(request, str(exc))
+        return redirect('financiera:prestamo_detalle', pk=pk)
+    return FileResponse(
+        buffer,
+        as_attachment=True,
+        filename=f'Solicitud_{prestamo.codigo_credito}.docx',
     )
 
 

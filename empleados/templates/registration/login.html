@@ -1,62 +1,41 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión · MicroFinanzas Pro</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
-          integrity="sha512-UJfAaOlIRtdR+0P6C3KUoTDAxVTuy3lnSXLyLKlHYJlcSU8Juge/mjeaxDNMlw9LgeIotgz5FP8eUQPhX1q10A=="
-          crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>Iniciar Sesión · Portal IMFDC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 </head>
-<body class="indigo darken-4" style="display: flex; min-height: 100vh; flex-direction: column; justify-content: center;">
+<body>
+    <div class="auth-shell">
+        <div class="auth-card">
+            <span class="icon-badge">{% include 'partials/_icon.html' with name='shield' size=24 %}</span>
+            <h1>Portal IMFDC</h1>
+            <p class="subtitle">Acceso administrativo</p>
 
-    <div class="container">
-        <div class="row">
-            <div class="col s12 m6 offset-m3">
-                <div class="card z-depth-3">
-                    <div class="card-content">
-                        <span class="card-title center-align indigo-text text-darken-4">
-                            <i class="material-icons medium">account_balance</i>
-                            <br>MicroFinanzas Pro
-                        </span>
-                        <p class="center-align grey-text text-darken-1">Acceso administrativo</p>
+            <form method="POST">
+                {% csrf_token %}
 
-                        <form method="POST">
-                            {% csrf_token %}
+                {% if form.errors %}
+                    <div class="alert alert-error">Usuario o contraseña incorrectos.</div>
+                {% endif %}
 
-                            {% if form.errors %}
-                                <div class="card-panel red lighten-4 red-text text-darken-4 text-center">
-                                    Usuario o contraseña incorrectos.
-                                </div>
-                            {% endif %}
-
-                            <div class="input-field">
-                                <i class="material-icons prefix">person</i>
-                                <input type="text" name="username" id="username" required>
-                                <label for="username">Usuario</label>
-                            </div>
-
-                            <div class="input-field">
-                                <i class="material-icons prefix">lock</i>
-                                <input type="password" name="password" id="password" required>
-                                <label for="password">Contraseña</label>
-                            </div>
-
-                            <div class="center-align" style="margin-top: 20px;">
-                                <button type="submit" class="waves-effect waves-light btn teal darken-2" style="width: 100%;">
-                                    Ingresar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                <div class="field">
+                    <label for="username">Usuario</label>
+                    <input type="text" name="username" id="username" required>
                 </div>
-            </div>
+
+                <div class="field">
+                    <label for="password">Contraseña</label>
+                    <input type="password" name="password" id="password" required>
+                </div>
+
+                <button type="submit" class="btn btn-accent">Ingresar</button>
+            </form>
         </div>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"
-            integrity="sha512-NiWqa2rceHnN3Z5j6mSAvbwwg3tiwVNxiAQaaSMSXnRRDh5C2mk/+sKQRw8qjV1vN4nf8iK2a0b048PnHbyx+Q=="
-            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </body>
 </html>

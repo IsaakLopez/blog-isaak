@@ -33,9 +33,7 @@ class ClienteForm(forms.ModelForm):
             'tipo_empresa', 'tipo_empleado', 'empresa_nombre', 'empresa_fecha_ingreso',
             'empresa_anios_laborando', 'cargo_actual', 'empresa_telefono', 'empresa_email',
             'empresa_direccion', 'empresa_ciudad', 'empresa_municipio', 'empresa_departamento',
-            'gerente_rrhh_nombre', 'jefe_inmediato_nombre',
-            # 6. Información financiera
-            'actividad_economica', 'ingresos_mensuales', 'rango_salario',
+            'gerente_rrhh_nombre', 'jefe_inmediato_nombre', 'rango_salario',
         ]
         widgets = {
             'fecha_nacimiento': FECHA_WIDGET,
@@ -55,9 +53,40 @@ class ClienteForm(forms.ModelForm):
 
 
 class PrestamoForm(forms.ModelForm):
+    numero_identificacion_cliente = forms.CharField(
+        label='No. de Identificación del Cliente', max_length=20,
+        help_text='Ingresa el número de identificación (DNI) del cliente ya registrado en el sistema.',
+    )
+
     class Meta:
         model = Prestamo
-        fields = ['cliente', 'monto_solicitado', 'tasa_interes_anual', 'plazo_meses', 'frecuencia_pago']
+        fields = ['monto_solicitado', 'tasa_interes_anual', 'plazo_meses', 'frecuencia_pago', 'destino']
+        widgets = {'destino': forms.RadioSelect}
+
+    field_order = ['numero_identificacion_cliente', 'monto_solicitado', 'tasa_interes_anual', 'plazo_meses', 'frecuencia_pago', 'destino']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['destino'].choices = Prestamo.DESTINO_CHOICES
+        self.order_fields(self.field_order)
+
+    def clean_numero_identificacion_cliente(self):
+        numero = self.cleaned_data['numero_identificacion_cliente'].strip()
+        try:
+            self.cliente_encontrado = Cliente.objects.get(numero_identificacion=numero)
+        except Cliente.DoesNotExist:
+            raise forms.ValidationError(
+                'No existe ningún cliente registrado con ese número de identificación. '
+                'Verifícalo o regístralo primero en el módulo de Clientes.'
+            )
+        return numero
+
+    def save(self, commit=True):
+        prestamo = super().save(commit=False)
+        prestamo.cliente = self.cliente_encontrado
+        if commit:
+            prestamo.save()
+        return prestamo
 
 
 class PagoCuotaForm(forms.Form):

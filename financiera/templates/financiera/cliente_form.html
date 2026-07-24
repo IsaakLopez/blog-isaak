@@ -1,320 +1,296 @@
 {% extends 'base.html' %}
-{% block title %}{% if modo == 'editar' %}Editar Cliente{% else %}Nuevo Cliente{% endif %} · MicroFinanzas Pro{% endblock %}
+{% block title %}{% if modo == 'editar' %}Editar Cliente{% else %}Nuevo Cliente{% endif %} · Portal IMFDC{% endblock %}
 
 {% block content %}
-<h4 class="indigo-text text-darken-4">
-    <i class="material-icons left">badge</i>
-    {% if modo == 'editar' %}Editar Cliente{% else %}Registro de Cliente (Expediente KYC){% endif %}
-</h4>
+<div class="page-header">
+    <h1>{% if modo == 'editar' %}Editar Cliente{% else %}Registro de Cliente (Expediente KYC){% endif %}</h1>
+</div>
 
 {% if form.non_field_errors %}
-    <div class="card-panel red lighten-4 red-text text-darken-4">{{ form.non_field_errors }}</div>
+    <div class="alert alert-error">{{ form.non_field_errors }}</div>
 {% endif %}
 
 <form method="POST">
     {% csrf_token %}
 
     <div class="card">
-        <div class="card-content">
-            <span class="card-title teal-text text-darken-2">1. Datos de Identificación Personal</span>
-            <div class="row" style="margin-bottom: 0;">
-                <div class="input-field col s12 m6">
-                    {{ form.primer_nombre }}
-                    <label for="{{ form.primer_nombre.id_for_label }}" class="active">Primer nombre</label>
-                    {% if form.primer_nombre.errors %}<span class="red-text">{{ form.primer_nombre.errors|join:', ' }}</span>{% endif %}
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.segundo_nombre }}
-                    <label for="{{ form.segundo_nombre.id_for_label }}" class="active">Segundo nombre</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.primer_apellido }}
-                    <label for="{{ form.primer_apellido.id_for_label }}" class="active">Primer apellido</label>
-                    {% if form.primer_apellido.errors %}<span class="red-text">{{ form.primer_apellido.errors|join:', ' }}</span>{% endif %}
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.segundo_apellido }}
-                    <label for="{{ form.segundo_apellido.id_for_label }}" class="active">Segundo apellido</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.fecha_nacimiento }}
-                    <label for="{{ form.fecha_nacimiento.id_for_label }}" class="active">Fecha de nacimiento</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.lugar_nacimiento }}
-                    <label for="{{ form.lugar_nacimiento.id_for_label }}" class="active">Lugar de nacimiento</label>
-                </div>
+        <p class="form-section-title">1. Datos de Identificación Personal</p>
+        <div class="grid-2">
+            <div class="field">
+                <label for="{{ form.primer_nombre.id_for_label }}">Primer nombre</label>
+                {{ form.primer_nombre }}
+                {% if form.primer_nombre.errors %}<span class="field-error">{{ form.primer_nombre.errors|join:', ' }}</span>{% endif %}
+            </div>
+            <div class="field">
+                <label for="{{ form.segundo_nombre.id_for_label }}">Segundo nombre</label>
+                {{ form.segundo_nombre }}
+            </div>
+            <div class="field">
+                <label for="{{ form.primer_apellido.id_for_label }}">Primer apellido</label>
+                {{ form.primer_apellido }}
+                {% if form.primer_apellido.errors %}<span class="field-error">{{ form.primer_apellido.errors|join:', ' }}</span>{% endif %}
+            </div>
+            <div class="field">
+                <label for="{{ form.segundo_apellido.id_for_label }}">Segundo apellido</label>
+                {{ form.segundo_apellido }}
+            </div>
+            <div class="field">
+                <label for="{{ form.fecha_nacimiento.id_for_label }}">Fecha de nacimiento</label>
+                {{ form.fecha_nacimiento }}
+            </div>
+            <div class="field">
+                <label for="{{ form.lugar_nacimiento.id_for_label }}">Lugar de nacimiento</label>
+                {{ form.lugar_nacimiento }}
+            </div>
 
-                <div class="col s12 m6">
-                    <p class="grey-text text-darken-1" style="margin-bottom: 4px;">Tipo de identificación</p>
+            <div class="field">
+                <label>Tipo de identificación</label>
+                <div class="radio-row">
                     {% for value, label in form.fields.tipo_identificacion.choices %}
-                        <label style="margin-right: 20px;">
-                            <input name="{{ form.tipo_identificacion.html_name }}" type="radio" value="{{ value }}" {% if form.tipo_identificacion.value == value %}checked{% endif %} />
-                            <span>{{ label }}</span>
-                        </label>
+                        <label><input name="{{ form.tipo_identificacion.html_name }}" type="radio" value="{{ value }}" {% if form.tipo_identificacion.value == value %}checked{% endif %} /><span>{{ label }}</span></label>
                     {% endfor %}
                 </div>
-                <div class="input-field col s12 m6">
-                    {{ form.numero_identificacion }}
-                    <label for="{{ form.numero_identificacion.id_for_label }}" class="active">No. de identificación</label>
-                    {% if form.numero_identificacion.errors %}<span class="red-text">{{ form.numero_identificacion.errors|join:', ' }}</span>{% endif %}
-                </div>
+            </div>
+            <div class="field">
+                <label for="{{ form.numero_identificacion.id_for_label }}">No. de identificación</label>
+                {{ form.numero_identificacion }}
+                {% if form.numero_identificacion.errors %}<span class="field-error">{{ form.numero_identificacion.errors|join:', ' }}</span>{% endif %}
+            </div>
 
-                <div class="col s12 m6">
-                    <p class="grey-text text-darken-1" style="margin-bottom: 4px;">Género</p>
+            <div class="field">
+                <label>Género</label>
+                <div class="radio-row">
                     {% for value, label in form.fields.genero.choices %}
-                        <label style="margin-right: 20px;">
-                            <input name="{{ form.genero.html_name }}" type="radio" value="{{ value }}" {% if form.genero.value == value %}checked{% endif %} />
-                            <span>{{ label }}</span>
-                        </label>
+                        <label><input name="{{ form.genero.html_name }}" type="radio" value="{{ value }}" {% if form.genero.value == value %}checked{% endif %} /><span>{{ label }}</span></label>
                     {% endfor %}
                 </div>
-                <div class="input-field col s12 m6">
-                    <select name="{{ form.nacionalidad.html_name }}" id="{{ form.nacionalidad.id_for_label }}">
-                        <option value="" disabled {% if not form.nacionalidad.value %}selected{% endif %}>Selecciona una opción</option>
-                        {% for value, label in form.fields.nacionalidad.choices %}
-                            {% if value %}<option value="{{ value }}" {% if form.nacionalidad.value == value %}selected{% endif %}>{{ label }}</option>{% endif %}
-                        {% endfor %}
-                    </select>
-                    <label>Nacionalidad</label>
-                    {% if form.nacionalidad.errors %}<span class="red-text">{{ form.nacionalidad.errors|join:', ' }}</span>{% endif %}
-                </div>
-                <div class="input-field col s12">
-                    {{ form.profesion_ocupacion_oficio }}
-                    <label for="{{ form.profesion_ocupacion_oficio.id_for_label }}" class="active">Profesión / Ocupación / Oficio</label>
-                </div>
+            </div>
+            <div class="field">
+                <label for="{{ form.nacionalidad.id_for_label }}">Nacionalidad</label>
+                <select name="{{ form.nacionalidad.html_name }}" id="{{ form.nacionalidad.id_for_label }}">
+                    <option value="" disabled {% if not form.nacionalidad.value %}selected{% endif %}>Selecciona una opción</option>
+                    {% for value, label in form.fields.nacionalidad.choices %}
+                        {% if value %}<option value="{{ value }}" {% if form.nacionalidad.value == value %}selected{% endif %}>{{ label }}</option>{% endif %}
+                    {% endfor %}
+                </select>
+                {% if form.nacionalidad.errors %}<span class="field-error">{{ form.nacionalidad.errors|join:', ' }}</span>{% endif %}
+            </div>
+            <div class="field span-2">
+                <label for="{{ form.profesion_ocupacion_oficio.id_for_label }}">Profesión / Ocupación / Oficio</label>
+                {{ form.profesion_ocupacion_oficio }}
             </div>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-content">
-            <span class="card-title teal-text text-darken-2">2. Información de Contacto y Domicilio</span>
-            <div class="row" style="margin-bottom: 0;">
-                <div class="input-field col s12 m6">
-                    {{ form.telefono_fijo }}
-                    <label for="{{ form.telefono_fijo.id_for_label }}" class="active">Teléfono fijo</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.celular }}
-                    <label for="{{ form.celular.id_for_label }}" class="active">Celular</label>
-                </div>
-                <div class="input-field col s12">
-                    {{ form.email_personal }}
-                    <label for="{{ form.email_personal.id_for_label }}" class="active">E-mail personal</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.direccion_colonia_barrio }}
-                    <label for="{{ form.direccion_colonia_barrio.id_for_label }}" class="active">Colonia / Barrio / Aldea</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.calle_avenida }}
-                    <label for="{{ form.calle_avenida.id_for_label }}" class="active">Calle / Avenida</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.numero_casa }}
-                    <label for="{{ form.numero_casa.id_for_label }}" class="active">No. de casa</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.punto_referencia }}
-                    <label for="{{ form.punto_referencia.id_for_label }}" class="active">Punto de referencia</label>
-                </div>
-                <div class="input-field col s12 m4">
-                    {{ form.municipio }}
-                    <label for="{{ form.municipio.id_for_label }}" class="active">Municipio</label>
-                </div>
-                <div class="input-field col s12 m4">
-                    {{ form.departamento }}
-                    <label for="{{ form.departamento.id_for_label }}" class="active">Departamento</label>
-                </div>
-                <div class="input-field col s12 m4">
-                    {{ form.pais }}
-                    <label for="{{ form.pais.id_for_label }}" class="active">País</label>
-                </div>
+        <p class="form-section-title">2. Información de Contacto y Domicilio</p>
+        <div class="grid-2">
+            <div class="field">
+                <label for="{{ form.telefono_fijo.id_for_label }}">Teléfono fijo</label>
+                {{ form.telefono_fijo }}
+            </div>
+            <div class="field">
+                <label for="{{ form.celular.id_for_label }}">Celular</label>
+                {{ form.celular }}
+            </div>
+            <div class="field span-2">
+                <label for="{{ form.email_personal.id_for_label }}">E-mail personal</label>
+                {{ form.email_personal }}
+            </div>
+            <div class="field">
+                <label for="{{ form.direccion_colonia_barrio.id_for_label }}">Colonia / Barrio / Aldea</label>
+                {{ form.direccion_colonia_barrio }}
+            </div>
+            <div class="field">
+                <label for="{{ form.calle_avenida.id_for_label }}">Calle / Avenida</label>
+                {{ form.calle_avenida }}
+            </div>
+            <div class="field">
+                <label for="{{ form.numero_casa.id_for_label }}">No. de casa</label>
+                {{ form.numero_casa }}
+            </div>
+            <div class="field">
+                <label for="{{ form.punto_referencia.id_for_label }}">Punto de referencia</label>
+                {{ form.punto_referencia }}
+            </div>
+        </div>
+        <div class="grid-3" style="margin-top: 16px;">
+            <div class="field">
+                <label for="{{ form.municipio.id_for_label }}">Municipio</label>
+                {{ form.municipio }}
+            </div>
+            <div class="field">
+                <label for="{{ form.departamento.id_for_label }}">Departamento</label>
+                {{ form.departamento }}
+            </div>
+            <div class="field">
+                <label for="{{ form.pais.id_for_label }}">País</label>
+                {{ form.pais }}
             </div>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-content">
-            <span class="card-title teal-text text-darken-2">3. Estado Civil y Datos Familiares</span>
-
-            <div class="row" style="margin-bottom: 0;">
-                <div class="col s12">
-                    <p class="grey-text text-darken-1" style="margin-bottom: 4px;">Estado civil</p>
+        <p class="form-section-title">3. Estado Civil y Datos Familiares</p>
+        <div class="grid-2">
+            <div class="field span-2">
+                <label>Estado civil</label>
+                <div class="radio-row">
                     {% for value, label in form.fields.estado_civil.choices %}
-                        <label style="margin-right: 20px;">
-                            <input name="{{ form.estado_civil.html_name }}" type="radio" value="{{ value }}" {% if form.estado_civil.value == value %}checked{% endif %} />
-                            <span>{{ label }}</span>
-                        </label>
+                        <label><input name="{{ form.estado_civil.html_name }}" type="radio" value="{{ value }}" {% if form.estado_civil.value == value %}checked{% endif %} /><span>{{ label }}</span></label>
                     {% endfor %}
                 </div>
-                <div class="input-field col s12 m4">
-                    {{ form.numero_dependientes }}
-                    <label for="{{ form.numero_dependientes.id_for_label }}" class="active">Número de dependientes</label>
-                </div>
             </div>
+            <div class="field">
+                <label for="{{ form.numero_dependientes.id_for_label }}">Número de dependientes</label>
+                {{ form.numero_dependientes }}
+            </div>
+        </div>
 
-            <div class="divider" style="margin: 16px 0;"></div>
-            <p class="grey-text text-darken-1"><strong>Datos del cónyuge</strong> (solo si el estado civil es Casado(a) o Unión libre)</p>
-            <div class="row" style="margin-bottom: 0;">
-                <div class="input-field col s12 m6">
-                    {{ form.nombre_conyuge }}
-                    <label for="{{ form.nombre_conyuge.id_for_label }}" class="active">Nombre del cónyuge</label>
-                    {% if form.nombre_conyuge.errors %}<span class="red-text">{{ form.nombre_conyuge.errors|join:', ' }}</span>{% endif %}
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.conyuge_empresa }}
-                    <label for="{{ form.conyuge_empresa.id_for_label }}" class="active">Empresa donde labora el cónyuge</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.conyuge_telefono_fijo }}
-                    <label for="{{ form.conyuge_telefono_fijo.id_for_label }}" class="active">Teléfono fijo (cónyuge)</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.conyuge_celular }}
-                    <label for="{{ form.conyuge_celular.id_for_label }}" class="active">Celular (cónyuge)</label>
-                </div>
+        <p class="subsection-note" style="margin-top: 16px;"><strong>Datos del cónyuge</strong> (solo si el estado civil es Casado(a) o Unión libre)</p>
+        <div class="grid-2">
+            <div class="field">
+                <label for="{{ form.nombre_conyuge.id_for_label }}">Nombre del cónyuge</label>
+                {{ form.nombre_conyuge }}
+                {% if form.nombre_conyuge.errors %}<span class="field-error">{{ form.nombre_conyuge.errors|join:', ' }}</span>{% endif %}
+            </div>
+            <div class="field">
+                <label for="{{ form.conyuge_empresa.id_for_label }}">Empresa donde labora el cónyuge</label>
+                {{ form.conyuge_empresa }}
+            </div>
+            <div class="field">
+                <label for="{{ form.conyuge_telefono_fijo.id_for_label }}">Teléfono fijo (cónyuge)</label>
+                {{ form.conyuge_telefono_fijo }}
+            </div>
+            <div class="field">
+                <label for="{{ form.conyuge_celular.id_for_label }}">Celular (cónyuge)</label>
+                {{ form.conyuge_celular }}
             </div>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-content">
-            <span class="card-title teal-text text-darken-2">4. Referencias Personales</span>
-            <div class="row" style="margin-bottom: 0;">
-                <div class="col s12"><strong>Referencia personal 1</strong></div>
-                <div class="input-field col s12 m4">
-                    {{ form.ref1_nombre }}
-                    <label for="{{ form.ref1_nombre.id_for_label }}" class="active">Nombre completo</label>
-                </div>
-                <div class="input-field col s12 m4">
-                    {{ form.ref1_telefono_fijo }}
-                    <label for="{{ form.ref1_telefono_fijo.id_for_label }}" class="active">Teléfono fijo</label>
-                </div>
-                <div class="input-field col s12 m4">
-                    {{ form.ref1_celular }}
-                    <label for="{{ form.ref1_celular.id_for_label }}" class="active">Celular</label>
-                </div>
-
-                <div class="col s12" style="margin-top: 12px;"><strong>Referencia personal 2</strong> <span class="grey-text">(opcional)</span></div>
-                <div class="input-field col s12 m4">
-                    {{ form.ref2_nombre }}
-                    <label for="{{ form.ref2_nombre.id_for_label }}" class="active">Nombre completo</label>
-                </div>
-                <div class="input-field col s12 m4">
-                    {{ form.ref2_telefono_fijo }}
-                    <label for="{{ form.ref2_telefono_fijo.id_for_label }}" class="active">Teléfono fijo</label>
-                </div>
-                <div class="input-field col s12 m4">
-                    {{ form.ref2_celular }}
-                    <label for="{{ form.ref2_celular.id_for_label }}" class="active">Celular</label>
-                </div>
+        <p class="form-section-title">4. Referencias Personales</p>
+        <p class="subsection-note"><strong>Referencia personal 1</strong></p>
+        <div class="grid-3">
+            <div class="field">
+                <label for="{{ form.ref1_nombre.id_for_label }}">Nombre completo</label>
+                {{ form.ref1_nombre }}
+            </div>
+            <div class="field">
+                <label for="{{ form.ref1_telefono_fijo.id_for_label }}">Teléfono fijo</label>
+                {{ form.ref1_telefono_fijo }}
+            </div>
+            <div class="field">
+                <label for="{{ form.ref1_celular.id_for_label }}">Celular</label>
+                {{ form.ref1_celular }}
+            </div>
+        </div>
+        <p class="subsection-note" style="margin-top: 16px;"><strong>Referencia personal 2</strong> <span>(opcional)</span></p>
+        <div class="grid-3">
+            <div class="field">
+                <label for="{{ form.ref2_nombre.id_for_label }}">Nombre completo</label>
+                {{ form.ref2_nombre }}
+            </div>
+            <div class="field">
+                <label for="{{ form.ref2_telefono_fijo.id_for_label }}">Teléfono fijo</label>
+                {{ form.ref2_telefono_fijo }}
+            </div>
+            <div class="field">
+                <label for="{{ form.ref2_celular.id_for_label }}">Celular</label>
+                {{ form.ref2_celular }}
             </div>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-content">
-            <span class="card-title teal-text text-darken-2">5. Información Profesional y Laboral</span>
-            <div class="row" style="margin-bottom: 0;">
-                <div class="col s12 m6">
-                    <p class="grey-text text-darken-1" style="margin-bottom: 4px;">Tipo de empresa</p>
+        <p class="form-section-title">5. Información Profesional y Laboral</p>
+        <div class="grid-2">
+            <div class="field">
+                <label>Tipo de empresa</label>
+                <div class="radio-row">
                     {% for value, label in form.fields.tipo_empresa.choices %}
-                        <label style="margin-right: 20px;">
-                            <input name="{{ form.tipo_empresa.html_name }}" type="radio" value="{{ value }}" {% if form.tipo_empresa.value == value %}checked{% endif %} />
-                            <span>{{ label }}</span>
-                        </label>
+                        <label><input name="{{ form.tipo_empresa.html_name }}" type="radio" value="{{ value }}" {% if form.tipo_empresa.value == value %}checked{% endif %} /><span>{{ label }}</span></label>
                     {% endfor %}
                 </div>
-                <div class="col s12 m6">
-                    <p class="grey-text text-darken-1" style="margin-bottom: 4px;">Tipo de empleado</p>
+            </div>
+            <div class="field">
+                <label>Tipo de empleado</label>
+                <div class="radio-row">
                     {% for value, label in form.fields.tipo_empleado.choices %}
-                        <label style="margin-right: 20px;">
-                            <input name="{{ form.tipo_empleado.html_name }}" type="radio" value="{{ value }}" {% if form.tipo_empleado.value == value %}checked{% endif %} />
-                            <span>{{ label }}</span>
-                        </label>
+                        <label><input name="{{ form.tipo_empleado.html_name }}" type="radio" value="{{ value }}" {% if form.tipo_empleado.value == value %}checked{% endif %} /><span>{{ label }}</span></label>
                     {% endfor %}
                 </div>
-                <div class="input-field col s12 m6">
-                    {{ form.empresa_nombre }}
-                    <label for="{{ form.empresa_nombre.id_for_label }}" class="active">Nombre de la empresa en la que labora</label>
-                </div>
-                <div class="input-field col s12 m3">
-                    {{ form.empresa_fecha_ingreso }}
-                    <label for="{{ form.empresa_fecha_ingreso.id_for_label }}" class="active">Fecha de ingreso</label>
-                </div>
-                <div class="input-field col s12 m3">
-                    {{ form.empresa_anios_laborando }}
-                    <label for="{{ form.empresa_anios_laborando.id_for_label }}" class="active">Años laborando</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.cargo_actual }}
-                    <label for="{{ form.cargo_actual.id_for_label }}" class="active">Cargo actual</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.empresa_telefono }}
-                    <label for="{{ form.empresa_telefono.id_for_label }}" class="active">Teléfono de la empresa</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.empresa_email }}
-                    <label for="{{ form.empresa_email.id_for_label }}" class="active">E-mail laboral</label>
-                </div>
-                <div class="input-field col s12">
-                    {{ form.empresa_direccion }}
-                    <label for="{{ form.empresa_direccion.id_for_label }}" class="active">Dirección de la empresa</label>
-                </div>
-                <div class="input-field col s12 m4">
-                    {{ form.empresa_ciudad }}
-                    <label for="{{ form.empresa_ciudad.id_for_label }}" class="active">Ciudad</label>
-                </div>
-                <div class="input-field col s12 m4">
-                    {{ form.empresa_municipio }}
-                    <label for="{{ form.empresa_municipio.id_for_label }}" class="active">Municipio</label>
-                </div>
-                <div class="input-field col s12 m4">
-                    {{ form.empresa_departamento }}
-                    <label for="{{ form.empresa_departamento.id_for_label }}" class="active">Departamento</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.gerente_rrhh_nombre }}
-                    <label for="{{ form.gerente_rrhh_nombre.id_for_label }}" class="active">Nombre del Gerente / Jefe de Recursos Humanos</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.jefe_inmediato_nombre }}
-                    <label for="{{ form.jefe_inmediato_nombre.id_for_label }}" class="active">Nombre del Jefe inmediato</label>
-                </div>
+            </div>
+            <div class="field">
+                <label for="{{ form.empresa_nombre.id_for_label }}">Nombre de la empresa en la que labora</label>
+                {{ form.empresa_nombre }}
+            </div>
+            <div class="field">
+                <label for="{{ form.cargo_actual.id_for_label }}">Cargo actual</label>
+                {{ form.cargo_actual }}
             </div>
         </div>
-    </div>
-
-    <div class="card">
-        <div class="card-content">
-            <span class="card-title teal-text text-darken-2">6. Información Financiera</span>
-            <div class="row" style="margin-bottom: 0;">
-                <div class="input-field col s12 m6">
-                    {{ form.actividad_economica }}
-                    <label for="{{ form.actividad_economica.id_for_label }}" class="active">Actividad Económica / Negocio</label>
-                </div>
-                <div class="input-field col s12 m6">
-                    {{ form.ingresos_mensuales }}
-                    <label for="{{ form.ingresos_mensuales.id_for_label }}" class="active">Ingreso mensual</label>
-                </div>
-                <div class="col s12">
-                    <p class="grey-text text-darken-1" style="margin-bottom: 4px;">Rango de salario devengado</p>
+        <div class="grid-2" style="margin-top: 16px;">
+            <div class="field">
+                <label for="{{ form.empresa_fecha_ingreso.id_for_label }}">Fecha de ingreso</label>
+                {{ form.empresa_fecha_ingreso }}
+            </div>
+            <div class="field">
+                <label for="{{ form.empresa_anios_laborando.id_for_label }}">Años laborando</label>
+                {{ form.empresa_anios_laborando }}
+            </div>
+            <div class="field">
+                <label for="{{ form.empresa_telefono.id_for_label }}">Teléfono de la empresa</label>
+                {{ form.empresa_telefono }}
+            </div>
+            <div class="field">
+                <label for="{{ form.empresa_email.id_for_label }}">E-mail laboral</label>
+                {{ form.empresa_email }}
+            </div>
+            <div class="field span-2">
+                <label for="{{ form.empresa_direccion.id_for_label }}">Dirección de la empresa</label>
+                {{ form.empresa_direccion }}
+            </div>
+        </div>
+        <div class="grid-3" style="margin-top: 16px;">
+            <div class="field">
+                <label for="{{ form.empresa_ciudad.id_for_label }}">Ciudad</label>
+                {{ form.empresa_ciudad }}
+            </div>
+            <div class="field">
+                <label for="{{ form.empresa_municipio.id_for_label }}">Municipio</label>
+                {{ form.empresa_municipio }}
+            </div>
+            <div class="field">
+                <label for="{{ form.empresa_departamento.id_for_label }}">Departamento</label>
+                {{ form.empresa_departamento }}
+            </div>
+        </div>
+        <div class="grid-2" style="margin-top: 16px;">
+            <div class="field">
+                <label for="{{ form.gerente_rrhh_nombre.id_for_label }}">Nombre del Gerente / Jefe de Recursos Humanos</label>
+                {{ form.gerente_rrhh_nombre }}
+            </div>
+            <div class="field">
+                <label for="{{ form.jefe_inmediato_nombre.id_for_label }}">Nombre del Jefe inmediato</label>
+                {{ form.jefe_inmediato_nombre }}
+            </div>
+        </div>
+        <div class="grid-2" style="margin-top: 16px;">
+            <div class="field span-2">
+                <label>Rango de salario devengado</label>
+                <div class="radio-row" style="flex-direction: column; align-items: flex-start; gap: 8px;">
                     {% for value, label in form.fields.rango_salario.choices %}
-                        <label style="display: block;">
-                            <input name="{{ form.rango_salario.html_name }}" type="radio" value="{{ value }}" {% if form.rango_salario.value == value %}checked{% endif %} />
-                            <span>{{ label }}</span>
-                        </label>
+                        <label><input name="{{ form.rango_salario.html_name }}" type="radio" value="{{ value }}" {% if form.rango_salario.value == value %}checked{% endif %} /><span>{{ label }}</span></label>
                     {% endfor %}
                 </div>
             </div>
         </div>
     </div>
 
-    <button type="submit" class="waves-effect waves-light btn teal darken-2">
-        <i class="material-icons left">save</i>Guardar Cliente
+    <button type="submit" class="btn btn-accent">
+        {% include 'partials/_icon.html' with name='check' size=16 %}Guardar Cliente
     </button>
 </form>
 {% endblock %}

@@ -1,35 +1,34 @@
 {% extends 'base.html' %}
-{% block title %}Registrar Pago · MicroFinanzas Pro{% endblock %}
+{% block title %}Registrar Pago · Portal IMFDC{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col s12 m8 offset-m2">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title indigo-text text-darken-4"><i class="material-icons left">point_of_sale</i>Registrar Pago de Cuota</span>
-                <p><strong>Crédito:</strong> {{ cuota.prestamo.codigo_credito }} — {{ cuota.prestamo.cliente }}</p>
-                <p><strong>Cuota N°:</strong> {{ cuota.numero_cuota }} — Vence: {{ cuota.fecha_vencimiento|date:'d/m/Y' }}</p>
-                <p><strong>Total cuota:</strong> L {{ cuota.monto_total_cuota }} — <strong>Pagado:</strong> L {{ cuota.monto_pagado }} — <strong>Saldo pendiente:</strong> L {{ saldo_pendiente }}</p>
-
-                <form method="POST">
-                    {% csrf_token %}
-                    <div class="row">
-                        <div class="input-field col s12 m6">
-                            {{ form.monto }}
-                            <label for="{{ form.monto.id_for_label }}" class="active">Monto a Pagar</label>
-                            {% if form.monto.errors %}<span class="red-text">{{ form.monto.errors|join:', ' }}</span>{% endif %}
-                        </div>
-                        <div class="input-field col s12 m6">
-                            {{ form.numero_comprobante }}
-                            <label for="{{ form.numero_comprobante.id_for_label }}" class="active">N° Comprobante externo (opcional)</label>
-                        </div>
-                    </div>
-                    <button type="submit" class="waves-effect waves-light btn teal darken-2">
-                        <i class="material-icons left">check</i>Confirmar Pago
-                    </button>
-                </form>
-            </div>
+<div style="max-width: 640px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-title">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='cash' size=16 %}</span>
+            Registrar Pago de Cuota
         </div>
+        <p class="subsection-note"><strong>Crédito:</strong> {{ cuota.prestamo.codigo_credito }} — {{ cuota.prestamo.cliente }}</p>
+        <p class="subsection-note"><strong>Cuota N°:</strong> {{ cuota.numero_cuota }} — Vence: {{ cuota.fecha_vencimiento|date:'d/m/Y' }}</p>
+        <p class="subsection-note"><strong>Total cuota:</strong> L {{ cuota.monto_total_cuota }} — <strong>Pagado:</strong> L {{ cuota.monto_pagado }} — <strong>Saldo pendiente:</strong> L {{ saldo_pendiente }}</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="grid-2">
+                <div class="field">
+                    <label for="{{ form.monto.id_for_label }}">Monto a Pagar</label>
+                    {{ form.monto }}
+                    {% if form.monto.errors %}<span class="field-error">{{ form.monto.errors|join:', ' }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ form.numero_comprobante.id_for_label }}">N° Comprobante externo (opcional)</label>
+                    {{ form.numero_comprobante }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-accent" style="margin-top: 12px;">
+                {% include 'partials/_icon.html' with name='check' size=16 %}Confirmar Pago
+            </button>
+        </form>
     </div>
 </div>
 {% endblock %}
