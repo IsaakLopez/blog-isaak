@@ -7,8 +7,8 @@ from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import ClienteForm, FirmaSolicitudForm, PagoCuotaForm, PrestamoForm
-from .models import Cliente, CuotaAmortizacion, Prestamo
+from .forms import ClienteForm, FirmaDocumentoForm, PagoCuotaForm, PrestamoForm
+from .models import Cliente, CuotaAmortizacion, Prestamo, TransaccionCaja
 from .permisos import requiere_permiso
 from .services.mora import actualizar_estados_mora
 
@@ -155,40 +155,42 @@ def prestamo_transicion(request, pk, nuevo_estado):
     return redirect('financiera:prestamo_detalle', pk=pk)
 
 
-@login_required
-def generar_contrato_view(request, pk):
-    prestamo = get_object_or_404(Prestamo, pk=pk)
-    if not prestamo.documento_contrato:
-        from .services.word_generator import generar_contrato
-        try:
-            generar_contrato(prestamo)
-        except FileNotFoundError as exc:
-            messages.error(request, str(exc))
-            return redirect('financiera:prestamo_detalle', pk=pk)
-    return FileResponse(
-        prestamo.documento_contrato.open('rb'),
-        as_attachment=True,
-        filename=f'{prestamo.codigo_credito}.docx',
-    )
+def _obtener_imagen_firma(request, pk):
+    """Procesa el formulario de elección de firma (manual/digital) que
+    acompaña al modal de cada documento generado. Devuelve una tupla
+    `(imagen_firma, respuesta_error)`:
+    - Si la petición es GET (enlace directo, sin pasar por el modal), o si
+      se eligió firma manual, devuelve `(None, None)`: el documento se
+      genera sin firma, como siempre.
+    - Si el formulario no es válido (ej. eligió digital sin subir imagen),
+      devuelve `(None, redirect_con_mensaje_de_error)`.
+    - Si eligió digital con una imagen válida, devuelve `(imagen_ya_limpia, None)`.
+    """
+    if request.method != 'POST':
+        return None, None
+
+    form = FirmaDocumentoForm(request.POST, request.FILES)
+    if not form.is_valid():
+        for errores in form.errors.values():
+            for error in errores:
+                messages.error(request, error)
+        return None, redirect('financiera:prestamo_detalle', pk=pk)
+
+    if form.cleaned_data['tipo_firma'] == FirmaDocumentoForm.TIPO_FIRMA_DIGITAL:
+        from .services.firma import limpiar_firma_digital
+
+        return limpiar_firma_digital(form.cleaned_data['firma_imagen']), None
+    return None, None
 
 
 @login_required
 def generar_solicitud_view(request, pk):
     prestamo = get_object_or_404(Prestamo.objects.select_related('cliente'), pk=pk)
-    from .services.firma import limpiar_firma_digital
+    imagen_firma, respuesta_error = _obtener_imagen_firma(request, pk)
+    if respuesta_error:
+        return respuesta_error
+
     from .services.word_generator import generar_solicitud_credito
-
-    imagen_firma = None
-    if request.method == 'POST':
-        form = FirmaSolicitudForm(request.POST, request.FILES)
-        if not form.is_valid():
-            for errores in form.errors.values():
-                for error in errores:
-                    messages.error(request, error)
-            return redirect('financiera:prestamo_detalle', pk=pk)
-        if form.cleaned_data['tipo_firma'] == FirmaSolicitudForm.TIPO_FIRMA_DIGITAL:
-            imagen_firma = limpiar_firma_digital(form.cleaned_data['firma_imagen'])
-
     try:
         buffer = generar_solicitud_credito(prestamo, imagen_firma=imagen_firma)
     except FileNotFoundError as exc:
@@ -204,9 +206,13 @@ def generar_solicitud_view(request, pk):
 @login_required
 def generar_recibo_desembolso_view(request, pk):
     prestamo = get_object_or_404(Prestamo.objects.select_related('cliente'), pk=pk)
+    imagen_firma, respuesta_error = _obtener_imagen_firma(request, pk)
+    if respuesta_error:
+        return respuesta_error
+
     from .services.word_generator import generar_recibo_desembolso
     try:
-        buffer = generar_recibo_desembolso(prestamo)
+        buffer = generar_recibo_desembolso(prestamo, imagen_firma=imagen_firma)
     except (FileNotFoundError, ValueError) as exc:
         messages.error(request, str(exc))
         return redirect('financiera:prestamo_detalle', pk=pk)
@@ -214,6 +220,26 @@ def generar_recibo_desembolso_view(request, pk):
         buffer,
         as_attachment=True,
         filename=f'Recibo_Desembolso_{prestamo.codigo_credito}.docx',
+    )
+
+
+@login_required
+def generar_pagare_view(request, pk):
+    prestamo = get_object_or_404(Prestamo.objects.select_related('cliente'), pk=pk)
+    imagen_firma, respuesta_error = _obtener_imagen_firma(request, pk)
+    if respuesta_error:
+        return respuesta_error
+
+    from .services.word_generator import generar_pagare
+    try:
+        buffer = generar_pagare(prestamo, imagen_firma=imagen_firma)
+    except (FileNotFoundError, ValueError) as exc:
+        messages.error(request, str(exc))
+        return redirect('financiera:prestamo_detalle', pk=pk)
+    return FileResponse(
+        buffer,
+        as_attachment=True,
+        filename=f'Pagare_{prestamo.codigo_credito}.docx',
     )
 
 
@@ -241,3 +267,25 @@ def registrar_pago(request, pk):
     return render(request, 'financiera/caja_pago_form.html', {
         'form': form, 'cuota': cuota, 'saldo_pendiente': saldo_pendiente,
     })
+
+
+@login_required
+def generar_recibo_pago_view(request, pk):
+    transaccion = get_object_or_404(
+        TransaccionCaja.objects.select_related('prestamo__cliente', 'cuota'), pk=pk,
+    )
+    if transaccion.tipo_movimiento != TransaccionCaja.TIPO_PAGO_CUOTA:
+        messages.error(request, 'Este movimiento no corresponde a un pago de cuota.')
+        return redirect('financiera:prestamo_detalle', pk=transaccion.prestamo_id)
+
+    from .services.word_generator import generar_recibo_pago
+    try:
+        buffer = generar_recibo_pago(transaccion)
+    except FileNotFoundError as exc:
+        messages.error(request, str(exc))
+        return redirect('financiera:prestamo_detalle', pk=transaccion.prestamo_id)
+    return FileResponse(
+        buffer,
+        as_attachment=True,
+        filename=f'Recibo_Pago_{transaccion.numero_comprobante}.docx',
+    )

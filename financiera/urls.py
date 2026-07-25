@@ -15,11 +15,12 @@ urlpatterns = [
     path('prestamos/nuevo/', views.prestamo_crear, name='prestamo_crear'),
     path('prestamos/<int:pk>/', views.prestamo_detalle, name='prestamo_detalle'),
     path('prestamos/<int:pk>/transicion/<str:nuevo_estado>/', views.prestamo_transicion, name='prestamo_transicion'),
-    path('prestamos/<int:pk>/contrato/', views.generar_contrato_view, name='generar_contrato'),
     path('prestamos/<int:pk>/solicitud/', views.generar_solicitud_view, name='generar_solicitud'),
     path('prestamos/<int:pk>/recibo-desembolso/', views.generar_recibo_desembolso_view, name='generar_recibo_desembolso'),
+    path('prestamos/<int:pk>/pagare/', views.generar_pagare_view, name='generar_pagare'),
 
     path('cuotas/<int:pk>/pagar/', views.registrar_pago, name='registrar_pago'),
+    path('transacciones/<int:pk>/recibo-pago/', views.generar_recibo_pago_view, name='generar_recibo_pago'),
 
     path('reportes/', views_reportes.reportes_index, name='reportes_index'),
     path('reportes/colocacion/', views_reportes.reporte_colocacion, name='reporte_colocacion'),

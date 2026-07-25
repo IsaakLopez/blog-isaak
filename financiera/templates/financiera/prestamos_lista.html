@@ -37,7 +37,6 @@
                     <th>Monto</th>
                     <th>Estado</th>
                     <th>Fecha de Solicitud</th>
-                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -59,13 +58,6 @@
                             {% endif %}
                         </td>
                         <td>{{ prestamo.fecha_solicitud|date:'d/m/Y' }}</td>
-                        <td>
-                            {% if prestamo.estado == 'PENDIENTE' or prestamo.estado == 'APROBADO' %}
-                                <a href="{% url 'financiera:generar_contrato' prestamo.pk %}" class="btn btn-outline btn-small">
-                                    {% include 'partials/_icon.html' with name='file-text' size=14 %}Contrato Word
-                                </a>
-                            {% endif %}
-                        </td>
                     </tr>
                 {% endfor %}
             </tbody>

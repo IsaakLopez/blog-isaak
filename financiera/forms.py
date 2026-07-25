@@ -113,7 +113,9 @@ class PagoCuotaForm(forms.Form):
     numero_comprobante = forms.CharField(max_length=30, required=False, label='N° de comprobante externo (opcional)')
 
 
-class FirmaSolicitudForm(forms.Form):
+class FirmaDocumentoForm(forms.Form):
+    """Elección de firma manual/digital al generar la Solicitud de Crédito,
+    el Recibo de Desembolso o el Pagaré."""
     TIPO_FIRMA_MANUAL = 'manual'
     TIPO_FIRMA_DIGITAL = 'digital'
     TIPO_FIRMA_CHOICES = [

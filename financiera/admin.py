@@ -13,7 +13,7 @@ class ClienteAdmin(admin.ModelAdmin):
 class CuotaAmortizacionInline(admin.TabularInline):
     model = CuotaAmortizacion
     extra = 0
-    readonly_fields = ('numero_cuota', 'fecha_vencimiento', 'monto_capital', 'monto_interes', 'monto_total_cuota')
+    readonly_fields = ('numero_cuota', 'fecha_vencimiento', 'monto_capital', 'monto_interes', 'monto_total_cuota', 'saldo')
     can_delete = False
 
 
@@ -28,7 +28,7 @@ class PrestamoAdmin(admin.ModelAdmin):
 
 @admin.register(CuotaAmortizacion)
 class CuotaAmortizacionAdmin(admin.ModelAdmin):
-    list_display = ('prestamo', 'numero_cuota', 'fecha_vencimiento', 'monto_total_cuota', 'estado_cuota')
+    list_display = ('prestamo', 'numero_cuota', 'fecha_vencimiento', 'monto_total_cuota', 'saldo', 'estado_cuota')
     list_filter = ('estado_cuota',)
     search_fields = ('prestamo__codigo_credito',)
 

@@ -1,0 +1,30 @@
+{% comment %}
+Modal de elección de firma (manual/digital) reutilizado por los distintos
+documentos generados (Solicitud, Recibo de Desembolso, Pagaré). Requiere
+`modal_id`, `titulo` y `form_action` en el contexto del include.
+{% endcomment %}
+<div class="modal-overlay" id="{{ modal_id }}">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>{{ titulo }}</h3>
+            <button type="button" class="modal-close" data-modal-cerrar aria-label="Cerrar">&times;</button>
+        </div>
+        <form method="POST" action="{{ form_action }}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <p class="subsection-note">¿Cómo firmará el solicitante este documento?</p>
+            <div class="radio-row" style="margin-bottom: 14px;">
+                <label><input type="radio" name="tipo_firma" value="manual" checked> Firma manual</label>
+                <label><input type="radio" name="tipo_firma" value="digital"> Firma digital</label>
+            </div>
+            <div class="field campo-firma-imagen" style="display:none;">
+                <label for="firma_imagen_{{ modal_id }}">Imagen de la firma (fondo blanco)</label>
+                <input type="file" id="firma_imagen_{{ modal_id }}" name="firma_imagen" accept="image/*">
+                <span class="hint">Sube una foto o escaneo de la firma sobre un fondo blanco; el sistema quitará el fondo automáticamente.</span>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 10px;">
+                <button type="button" class="btn btn-outline" data-modal-cancelar>Cancelar</button>
+                <button type="submit" class="btn btn-accent">Generar</button>
+            </div>
+        </form>
+    </div>
+</div>

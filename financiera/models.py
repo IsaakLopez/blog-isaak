@@ -266,8 +266,6 @@ class Prestamo(models.Model):
     fecha_aprobacion = models.DateTimeField(null=True, blank=True)
     fecha_desembolso = models.DateTimeField(null=True, blank=True)
 
-    documento_contrato = models.FileField(upload_to='contratos/', null=True, blank=True)
-
     asesor = models.ForeignKey(
         Empleado, on_delete=models.SET_NULL, null=True, blank=True, related_name='prestamos_asesorados'
     )
@@ -344,17 +342,10 @@ class Prestamo(models.Model):
 
         notificar_cambio_estado(self, actor=empleado)
 
-        if nuevo_estado == self.ESTADO_APROBADO:
-            self._generar_contrato()
-        elif nuevo_estado == self.ESTADO_DESEMBOLSADO and estado_anterior == self.ESTADO_APROBADO:
+        if nuevo_estado == self.ESTADO_DESEMBOLSADO and estado_anterior == self.ESTADO_APROBADO:
             self._activar_desembolso(empleado)
 
         return self
-
-    def _generar_contrato(self):
-        from financiera.services.word_generator import generar_contrato
-
-        generar_contrato(self)
 
     def _activar_desembolso(self, empleado):
         from financiera.services.amortizacion import generar_tabla_amortizacion
@@ -396,6 +387,9 @@ class CuotaAmortizacion(models.Model):
     monto_capital = models.DecimalField(max_digits=12, decimal_places=2, validators=[VALOR_NO_NEGATIVO])
     monto_interes = models.DecimalField(max_digits=12, decimal_places=2, validators=[VALOR_NO_NEGATIVO])
     monto_total_cuota = models.DecimalField(max_digits=12, decimal_places=2, validators=[MONTO_POSITIVO])
+    saldo = models.DecimalField(
+        'Saldo después de esta cuota', max_digits=12, decimal_places=2, validators=[VALOR_NO_NEGATIVO],
+    )
     estado_cuota = models.CharField(max_length=20, choices=ESTADO_CUOTA_CHOICES, default=ESTADO_PENDIENTE)
 
     class Meta:
