@@ -8,6 +8,7 @@ from docx import Document as DocumentoWord
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Cm
 from docxtpl import DocxTemplate
+from django.utils import timezone
 
 from financiera.models import Cliente, Prestamo
 from financiera.services.numero_a_letras import monto_en_letras
@@ -192,7 +193,7 @@ def generar_solicitud_credito(prestamo, imagen_firma=None):
         # Datos del crédito
         'plazo': prestamo.plazo_meses,
         'monto_solicitado': f'L {prestamo.monto_solicitado:,.2f}',
-        'fecha_solicitud': prestamo.fecha_solicitud.strftime('%d/%m/%Y'),
+        'fecha_solicitud': timezone.localtime(prestamo.fecha_solicitud).strftime('%d/%m/%Y'),
         **_marcar(_DESTINO_A_CHK, prestamo.destino),
 
         # 1. Identificación personal
@@ -292,7 +293,7 @@ def generar_recibo_desembolso(prestamo, imagen_firma=None):
     if not prestamo.fecha_desembolso:
         raise ValueError('El préstamo todavía no ha sido desembolsado.')
 
-    fecha = prestamo.fecha_desembolso
+    fecha = timezone.localtime(prestamo.fecha_desembolso)
     contexto = {
         'cliente_nombre': prestamo.cliente.nombre_completo,
         'cliente_dni': prestamo.cliente.numero_identificacion,
@@ -342,7 +343,7 @@ def generar_pagare(prestamo, imagen_firma=None):
     if not ultima_cuota:
         raise ValueError('El préstamo no tiene tabla de amortización generada.')
 
-    fecha_expedicion = prestamo.fecha_desembolso
+    fecha_expedicion = timezone.localtime(prestamo.fecha_desembolso)
     fecha_pago = ultima_cuota.fecha_vencimiento
     contexto = {
         'ciudad_pagare': CIUDAD_INSTITUCION,
@@ -379,7 +380,7 @@ def generar_recibo_pago(transaccion):
     if not PLANTILLA_RECIBO_PAGO_PATH.exists():
         raise FileNotFoundError('No existe la plantilla de recibo de pago.')
 
-    fecha = transaccion.fecha_hora
+    fecha = timezone.localtime(transaccion.fecha_hora)
     contexto = {
         'cliente_nombre': transaccion.prestamo.cliente.nombre_completo,
         'cliente_dni': transaccion.prestamo.cliente.numero_identificacion,

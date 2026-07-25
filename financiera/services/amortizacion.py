@@ -1,4 +1,6 @@
-"""Cálculo de la tabla de amortización (sistema francés de cuota fija)."""
+"""Cálculo de la tabla de amortización (sistema francés de cuota fija).
+La tasa que maneja la institución es MENSUAL (no anual): se anualiza (x12)
+y se reparte entre los pagos del año para obtener la tasa de cada periodo."""
 import calendar
 from datetime import timedelta
 from decimal import ROUND_HALF_UP, Decimal
@@ -48,17 +50,21 @@ def _numero_de_cuotas(plazo_meses, frecuencia_pago):
     return int((Decimal(plazo_meses) / Decimal('12') * pagos_por_anio).to_integral_value(rounding=ROUND_HALF_UP))
 
 
-def generar_tabla_amortizacion(monto, tasa_interes_anual, plazo_meses, frecuencia_pago, fecha_inicio):
+def generar_tabla_amortizacion(monto, tasa_interes_mensual, plazo_meses, frecuencia_pago, fecha_inicio):
     """Devuelve una lista de dicts listos para crear objetos CuotaAmortizacion,
     usando el sistema francés de cuota fija. El redondeo se ajusta en la
     última cuota para que la suma de capital cuadre exactamente con el monto
     solicitado."""
     monto = Decimal(monto)
-    tasa_anual = Decimal(tasa_interes_anual) / Decimal('100')
+    tasa_mensual = Decimal(tasa_interes_mensual) / Decimal('100')
     numero_cuotas = _numero_de_cuotas(plazo_meses, frecuencia_pago)
     pagos_por_anio = FRECUENCIA_A_PAGOS_POR_ANIO[frecuencia_pago]
 
-    tasa_periodica = tasa_anual / pagos_por_anio
+    # La tasa se cotiza mensual, no anual: se multiplica por 12 para obtener
+    # su equivalente anual nominal antes de repartirla entre los pagos del
+    # año (ej. mensual -> tasa_periodica = tasa_mensual; quincenal -> la mitad;
+    # semanal -> aprox. una cuarta parte).
+    tasa_periodica = (tasa_mensual * 12) / pagos_por_anio
 
     if tasa_periodica == 0:
         cuota_fija = _redondear(monto / numero_cuotas)

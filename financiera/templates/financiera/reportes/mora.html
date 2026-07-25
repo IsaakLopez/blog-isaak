@@ -20,7 +20,7 @@
         <thead>
             <tr>
                 <th>Cliente</th><th>Asesor</th><th>Código Crédito</th><th>Cuota N°</th>
-                <th>Fecha Vencimiento</th><th>Días de Atraso</th><th>Saldo Pendiente</th>
+                <th>Fecha Vencimiento</th><th>Días de Atraso</th><th>Saldo Pendiente</th><th>Mora Acumulada</th>
             </tr>
         </thead>
         <tbody>
@@ -33,6 +33,7 @@
                 <td>{{ f.cuota.fecha_vencimiento|date:'d/m/Y' }}</td>
                 <td><span class="badge badge-danger">{{ f.dias_atraso }} días</span></td>
                 <td>L {{ f.saldo_pendiente|floatformat:2 }}</td>
+                <td>L {{ f.mora_acumulada|floatformat:2 }}</td>
             </tr>
             {% endfor %}
         </tbody>

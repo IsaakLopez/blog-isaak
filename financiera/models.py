@@ -1,9 +1,9 @@
-from datetime import date
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 from empleados.models import Empleado
 
@@ -253,7 +253,7 @@ class Prestamo(models.Model):
     codigo_credito = models.CharField(max_length=20, unique=True, editable=False)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='prestamos')
     monto_solicitado = models.DecimalField(max_digits=12, decimal_places=2, validators=[MONTO_POSITIVO])
-    tasa_interes_anual = models.DecimalField(max_digits=5, decimal_places=2, validators=[VALOR_NO_NEGATIVO])
+    tasa_interes_mensual = models.DecimalField(max_digits=5, decimal_places=2, validators=[VALOR_NO_NEGATIVO])
     plazo_meses = models.PositiveIntegerField(validators=[MinValueValidator(1, message='Debe ser al menos 1 mes.')])
     frecuencia_pago = models.CharField(max_length=15, choices=FRECUENCIA_CHOICES, default=FRECUENCIA_MENSUAL)
     tipo_credito = models.CharField(
@@ -296,7 +296,7 @@ class Prestamo(models.Model):
 
     @classmethod
     def _generar_codigo_credito(cls):
-        anio = date.today().year
+        anio = timezone.localdate().year
         prefijo = f'CR-{anio}-'
         ultimo = (
             cls.objects.filter(codigo_credito__startswith=prefijo)
@@ -324,8 +324,6 @@ class Prestamo(models.Model):
                     'Tu cargo no tiene permiso para realizar esta acción sobre el crédito.'
                 )
 
-        from django.utils import timezone
-
         estado_anterior = self.estado
         self.estado = nuevo_estado
 
@@ -352,10 +350,10 @@ class Prestamo(models.Model):
 
         tabla = generar_tabla_amortizacion(
             monto=self.monto_solicitado,
-            tasa_interes_anual=self.tasa_interes_anual,
+            tasa_interes_mensual=self.tasa_interes_mensual,
             plazo_meses=self.plazo_meses,
             frecuencia_pago=self.frecuencia_pago,
-            fecha_inicio=self.fecha_desembolso.date() if self.fecha_desembolso else date.today(),
+            fecha_inicio=timezone.localdate(self.fecha_desembolso) if self.fecha_desembolso else timezone.localdate(),
         )
         for cuota in tabla:
             CuotaAmortizacion.objects.create(prestamo=self, **cuota)
@@ -381,6 +379,12 @@ class CuotaAmortizacion(models.Model):
         (ESTADO_VENCIDO, 'Vencido'),
     ]
 
+    # Mora: 2% simple por cada mes calendario completo de atraso, sobre el
+    # saldo pendiente DE LA CUOTA (no el monto original) -- si la cuota tuvo
+    # un abono parcial, la mora se calcula solo sobre lo que sigue debiendo.
+    TASA_MORA_MENSUAL = Decimal('0.02')
+    DIAS_POR_MES_MORA = 30
+
     prestamo = models.ForeignKey(Prestamo, on_delete=models.CASCADE, related_name='cuotas')
     numero_cuota = models.PositiveIntegerField()
     fecha_vencimiento = models.DateField()
@@ -403,28 +407,117 @@ class CuotaAmortizacion(models.Model):
 
     @property
     def monto_pagado(self):
-        total = self.transacciones.aggregate(total=models.Sum('monto_pagado'))['total']
-        return total or 0
+        total = self.transacciones.filter(
+            tipo_movimiento=TransaccionCaja.TIPO_PAGO_CUOTA,
+        ).aggregate(total=models.Sum('monto_pagado'))['total']
+        # OJO: se redondea a 2 decimales -- en SQLite, Sum() sobre un
+        # DecimalField pasa por REAL (punto flotante) y puede devolver
+        # residuos de precisión (ej. 1234.5600000000001).
+        return (total or Decimal('0')).quantize(Decimal('0.01'))
+
+    @property
+    def saldo_pendiente(self):
+        """Lo que falta para terminar de pagar ESTA cuota (sin contar mora)."""
+        return (self.monto_total_cuota - self.monto_pagado).quantize(Decimal('0.01'))
+
+    @property
+    def dias_atraso(self):
+        if self.estado_cuota == self.ESTADO_PAGADO or self.saldo_pendiente <= 0:
+            return 0
+        dias = (timezone.localdate() - self.fecha_vencimiento).days
+        return max(dias, 0)
+
+    @property
+    def meses_atraso(self):
+        return self.dias_atraso // self.DIAS_POR_MES_MORA
+
+    @property
+    def mora_pagada(self):
+        total = self.transacciones.filter(
+            tipo_movimiento=TransaccionCaja.TIPO_MORA,
+        ).aggregate(total=models.Sum('monto_pagado'))['total']
+        return (total or Decimal('0')).quantize(Decimal('0.01'))
+
+    @property
+    def mora_generada(self):
+        """Mora bruta generada hasta hoy: 2% simple por cada mes completo de
+        atraso, sobre el saldo pendiente ACTUAL de la cuota (si tuvo un
+        abono, la mora se recalcula sobre lo que sigue debiendo, no sobre el
+        monto original). No descuenta lo ya pagado de mora -- para eso está
+        `mora_acumulada`."""
+        meses = self.meses_atraso
+        saldo = self.saldo_pendiente
+        if meses <= 0 or saldo <= 0:
+            return Decimal('0.00')
+        return (self.TASA_MORA_MENSUAL * meses * saldo).quantize(Decimal('0.01'))
+
+    @property
+    def mora_acumulada(self):
+        """Mora que todavía falta pagar (la generada hasta hoy, menos lo que
+        ya se pagó de mora)."""
+        pendiente = self.mora_generada - self.mora_pagada
+        return pendiente if pendiente > 0 else Decimal('0.00')
+
+    @property
+    def total_a_pagar(self):
+        """Lo que el cliente debe traer hoy para ponerse al día con esta
+        cuota: su saldo pendiente más la mora acumulada."""
+        return self.saldo_pendiente + self.mora_acumulada
 
     def registrar_pago(self, monto, cajero, numero_comprobante=''):
+        """Aplica un pago sobre esta cuota. Acepta cualquier monto positivo,
+        no solo el exacto de la cuota:
+        - Si es MENOS que el saldo pendiente, es un abono parcial (la cuota
+          queda "Pagado Parcial").
+        - Si alcanza para la cuota y sobra, primero se cobra la mora
+          acumulada (si hay) y luego el resto se aplica como abono a
+          capital, reduciendo el saldo restante del préstamo (esta cuota y
+          las futuras) -- el préstamo se termina de pagar antes, las cuotas
+          futuras mantienen su monto tal como están en la tabla original."""
         monto = Decimal(monto)
         if monto <= 0:
             raise ValidationError('El monto a pagar debe ser mayor a cero.')
 
-        saldo_pendiente = self.monto_total_cuota - self.monto_pagado
-        if monto > saldo_pendiente:
+        saldo_cuota = self.saldo_pendiente
+        mora = self.mora_acumulada
+        tope_maximo = saldo_cuota + mora + self.saldo
+        if monto > tope_maximo:
             raise ValidationError(
-                f'El monto (${monto:.2f}) excede el saldo pendiente de la cuota (${saldo_pendiente:.2f}).'
+                f'El monto (L {monto:,.2f}) excede el total pendiente del préstamo, '
+                f'incluyendo mora (L {tope_maximo:,.2f}).'
             )
 
-        transaccion = TransaccionCaja.objects.create(
-            prestamo=self.prestamo,
-            cuota=self,
-            cajero=cajero,
-            tipo_movimiento=TransaccionCaja.TIPO_PAGO_CUOTA,
-            monto_pagado=monto,
-            numero_comprobante=numero_comprobante,
-        )
+        restante = monto
+        comprobante_usado = False
+        transacciones_creadas = []
+
+        def _siguiente_comprobante():
+            nonlocal comprobante_usado
+            if comprobante_usado or not numero_comprobante:
+                return ''
+            comprobante_usado = True
+            return numero_comprobante
+
+        if mora > 0 and restante > 0:
+            monto_mora = min(restante, mora)
+            transacciones_creadas.append(TransaccionCaja.objects.create(
+                prestamo=self.prestamo, cuota=self, cajero=cajero,
+                tipo_movimiento=TransaccionCaja.TIPO_MORA,
+                monto_pagado=monto_mora,
+                numero_comprobante=_siguiente_comprobante(),
+            ))
+            restante -= monto_mora
+
+        if saldo_cuota > 0 and restante > 0:
+            monto_cuota = min(restante, saldo_cuota)
+            transacciones_creadas.append(TransaccionCaja.objects.create(
+                prestamo=self.prestamo, cuota=self, cajero=cajero,
+                tipo_movimiento=TransaccionCaja.TIPO_PAGO_CUOTA,
+                monto_pagado=monto_cuota,
+                numero_comprobante=_siguiente_comprobante(),
+            ))
+            restante -= monto_cuota
+
         pagado = self.monto_pagado
         if pagado >= self.monto_total_cuota:
             self.estado_cuota = self.ESTADO_PAGADO
@@ -432,9 +525,32 @@ class CuotaAmortizacion(models.Model):
             self.estado_cuota = self.ESTADO_PAGADO_PARCIAL
         self.save()
 
+        if restante > 0:
+            transacciones_creadas.append(
+                self._aplicar_abono_capital(restante, cajero, _siguiente_comprobante())
+            )
+
         if not self.prestamo.cuotas.exclude(estado_cuota=self.ESTADO_PAGADO).exists():
             self.prestamo.transicionar(Prestamo.ESTADO_LIQUIDADO, automatico=True)
 
+        return transacciones_creadas
+
+    def _aplicar_abono_capital(self, monto, cajero, numero_comprobante=''):
+        """Registra el exceso pagado como abono a capital y reduce el saldo
+        restante del préstamo (de esta cuota en adelante) sin tocar el monto
+        de las cuotas futuras."""
+        transaccion = TransaccionCaja.objects.create(
+            prestamo=self.prestamo, cuota=None, cajero=cajero,
+            tipo_movimiento=TransaccionCaja.TIPO_ABONO_CAPITAL,
+            monto_pagado=monto,
+            numero_comprobante=numero_comprobante,
+        )
+        cuotas_a_reducir = self.prestamo.cuotas.filter(
+            numero_cuota__gte=self.numero_cuota, saldo__gt=0,
+        ).order_by('numero_cuota')
+        for cuota in cuotas_a_reducir:
+            cuota.saldo = max(Decimal('0.00'), cuota.saldo - monto)
+            cuota.save(update_fields=['saldo'])
         return transaccion
 
 
@@ -442,11 +558,15 @@ class TransaccionCaja(models.Model):
     TIPO_PAGO_CUOTA = 'PAGO_CUOTA'
     TIPO_DESEMBOLSO = 'DESEMBOLSO'
     TIPO_AJUSTE = 'AJUSTE'
+    TIPO_MORA = 'MORA'
+    TIPO_ABONO_CAPITAL = 'ABONO_CAPITAL'
 
     TIPO_MOVIMIENTO_CHOICES = [
         (TIPO_PAGO_CUOTA, 'Pago de Cuota'),
         (TIPO_DESEMBOLSO, 'Desembolso'),
         (TIPO_AJUSTE, 'Ajuste'),
+        (TIPO_MORA, 'Mora'),
+        (TIPO_ABONO_CAPITAL, 'Abono a Capital'),
     ]
 
     prestamo = models.ForeignKey(Prestamo, on_delete=models.PROTECT, related_name='transacciones')

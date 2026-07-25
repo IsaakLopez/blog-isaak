@@ -246,7 +246,6 @@ def generar_pagare_view(request, pk):
 @requiere_permiso('cobrar')
 def registrar_pago(request, pk):
     cuota = get_object_or_404(CuotaAmortizacion.objects.select_related('prestamo'), pk=pk)
-    saldo_pendiente = cuota.monto_total_cuota - cuota.monto_pagado
     if request.method == 'POST':
         form = PagoCuotaForm(request.POST)
         if form.is_valid():
@@ -261,11 +260,13 @@ def registrar_pago(request, pk):
                 return redirect('financiera:prestamo_detalle', pk=cuota.prestamo_id)
             except ValidationError as exc:
                 form.add_error('monto', exc)
-                saldo_pendiente = cuota.monto_total_cuota - cuota.monto_pagado
     else:
-        form = PagoCuotaForm(initial={'monto': saldo_pendiente})
+        form = PagoCuotaForm(initial={'monto': cuota.total_a_pagar})
     return render(request, 'financiera/caja_pago_form.html', {
-        'form': form, 'cuota': cuota, 'saldo_pendiente': saldo_pendiente,
+        'form': form, 'cuota': cuota,
+        'saldo_pendiente': cuota.saldo_pendiente,
+        'mora_acumulada': cuota.mora_acumulada,
+        'total_a_pagar': cuota.total_a_pagar,
     })
 
 

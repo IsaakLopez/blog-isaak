@@ -1,12 +1,13 @@
 """Vistas de la sección Reportes: cada una soporta '?export=xlsx' (con el
 mismo filtro de fechas aplicado) para descargar exactamente lo que se ve en
 pantalla."""
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncDate
 from django.shortcuts import render
+from django.utils import timezone
 
 from .models import CuotaAmortizacion, Prestamo, TransaccionCaja
 from .services.excel_export import exportar_excel
@@ -15,7 +16,7 @@ DIAS_RANGO_DEFECTO = 30
 
 
 def _rango_fechas(request):
-    hoy = date.today()
+    hoy = timezone.localdate()
     desde = request.GET.get('desde') or (hoy - timedelta(days=DIAS_RANGO_DEFECTO)).isoformat()
     hasta = request.GET.get('hasta') or hoy.isoformat()
     return desde, hasta
@@ -70,7 +71,6 @@ def reporte_cartera_estado(request):
 
 @login_required
 def reporte_mora(request):
-    hoy = date.today()
     cuotas = (
         CuotaAmortizacion.objects.filter(estado_cuota=CuotaAmortizacion.ESTADO_VENCIDO)
         .select_related('prestamo__cliente', 'prestamo__asesor')
@@ -78,12 +78,11 @@ def reporte_mora(request):
     )
     filas = []
     for cuota in cuotas:
-        dias_atraso = (hoy - cuota.fecha_vencimiento).days
-        saldo_pendiente = cuota.monto_total_cuota - cuota.monto_pagado
         filas.append({
             'cuota': cuota,
-            'dias_atraso': dias_atraso,
-            'saldo_pendiente': saldo_pendiente,
+            'dias_atraso': cuota.dias_atraso,
+            'saldo_pendiente': cuota.saldo_pendiente,
+            'mora_acumulada': cuota.mora_acumulada,
         })
 
     if request.GET.get('export') == 'xlsx':
@@ -96,10 +95,14 @@ def reporte_mora(request):
                 f['cuota'].fecha_vencimiento.strftime('%d/%m/%Y'),
                 f['dias_atraso'],
                 float(f['saldo_pendiente']),
+                float(f['mora_acumulada']),
             )
             for f in filas
         ]
-        encabezados = ['Cliente', 'Asesor', 'Código Crédito', 'Cuota N°', 'Fecha Vencimiento', 'Días de Atraso', 'Saldo Pendiente']
+        encabezados = [
+            'Cliente', 'Asesor', 'Código Crédito', 'Cuota N°', 'Fecha Vencimiento',
+            'Días de Atraso', 'Saldo Pendiente', 'Mora Acumulada',
+        ]
         return exportar_excel('Mora_cartera_en_riesgo', encabezados, filas_excel)
 
     return render(request, 'financiera/reportes/mora.html', {'filas': filas})

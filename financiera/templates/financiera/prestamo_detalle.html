@@ -3,6 +3,12 @@
 
 {% block content %}
 <div class="card">
+    <div style="margin-bottom: 16px;">
+        <a href="{% url 'financiera:prestamos_lista' %}" class="btn btn-outline btn-small">
+            {% include 'partials/_icon.html' with name='arrow-left' size=14 %}Volver a Créditos
+        </a>
+    </div>
+
     <div class="card-title">
         <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='credit-card' size=16 %}</span>
         {{ prestamo.codigo_credito }}
@@ -21,7 +27,7 @@
         <div><strong>Cliente:</strong> <a class="link" href="{% url 'financiera:cliente_detalle' prestamo.cliente.pk %}">{{ prestamo.cliente }}</a></div>
         <div><strong>Asesor:</strong> {{ prestamo.asesor|default:'—' }}</div>
         <div><strong>Monto Solicitado:</strong> L {{ prestamo.monto_solicitado }}</div>
-        <div><strong>Tasa Interés Anual:</strong> {{ prestamo.tasa_interes_anual }}%</div>
+        <div><strong>Tasa Interés Mensual:</strong> {{ prestamo.tasa_interes_mensual }}%</div>
         <div><strong>Plazo:</strong> {{ prestamo.plazo_meses }} meses</div>
         <div><strong>Frecuencia de Pago:</strong> {{ prestamo.get_frecuencia_pago_display }}</div>
         <div><strong>Tipo de Crédito:</strong> {{ prestamo.get_tipo_credito_display }}</div>
@@ -51,12 +57,6 @@
             </form>
         {% endfor %}
     </div>
-
-    <div style="margin-top: 16px;">
-        <a href="{% url 'financiera:prestamos_lista' %}" class="btn btn-outline btn-small">
-            {% include 'partials/_icon.html' with name='arrow-left' size=14 %}Volver a Créditos
-        </a>
-    </div>
 </div>
 
 {% if cuotas %}
@@ -68,18 +68,19 @@
     <div class="table-wrap">
     <table class="data-table">
         <thead>
-            <tr><th>N°</th><th>Vencimiento</th><th>Capital</th><th>Interés</th><th>Total Cuota</th><th>Saldo</th><th>Pagado</th><th>Estado</th>{% if puede_cobrar %}<th>Acción</th>{% endif %}</tr>
+            <tr><th>N°</th><th>Vencimiento</th><th>Capital</th><th>Interés</th><th>Total Cuota</th><th>Saldo</th><th>Pagado</th><th>Mora</th><th>Estado</th>{% if puede_cobrar %}<th>Acción</th>{% endif %}</tr>
         </thead>
         <tbody>
             {% for cuota in cuotas %}
             <tr>
                 <td>{{ cuota.numero_cuota }}</td>
                 <td>{{ cuota.fecha_vencimiento|date:'d/m/Y' }}</td>
-                <td>L {{ cuota.monto_capital }}</td>
-                <td>L {{ cuota.monto_interes }}</td>
-                <td>L {{ cuota.monto_total_cuota }}</td>
-                <td>L {{ cuota.saldo }}</td>
-                <td>L {{ cuota.monto_pagado }}</td>
+                <td>L {{ cuota.monto_capital|floatformat:2 }}</td>
+                <td>L {{ cuota.monto_interes|floatformat:2 }}</td>
+                <td>L {{ cuota.monto_total_cuota|floatformat:2 }}</td>
+                <td>L {{ cuota.saldo|floatformat:2 }}</td>
+                <td>L {{ cuota.monto_pagado|floatformat:2 }}</td>
+                <td>{% if cuota.mora_acumulada %}<span class="badge badge-danger">L {{ cuota.mora_acumulada|floatformat:2 }}</span>{% else %}—{% endif %}</td>
                 <td>
                     {% if cuota.estado_cuota == 'PAGADO' %}
                         <span class="badge badge-success">Pagado</span>

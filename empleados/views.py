@@ -8,6 +8,7 @@ from django.core.mail import send_mail
 from django.db.models import Q, Sum
 from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from financiera.models import Cliente, CuotaAmortizacion, Prestamo, TransaccionCaja
 from financiera.services.mora import actualizar_estados_mora
@@ -23,7 +24,7 @@ def _movimientos_mensuales():
     """Últimos 6 meses de desembolsos vs. cobros, para las barras del panel
     gerencial. Se calcula en el servidor (agregación + % de altura) para no
     depender de ninguna librería de gráficos en el front."""
-    primer_dia_mes_actual = date.today().replace(day=1)
+    primer_dia_mes_actual = timezone.localdate().replace(day=1)
     meses = []
     for i in range(5, -1, -1):
         mes = primer_dia_mes_actual.month - i

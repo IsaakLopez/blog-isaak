@@ -71,15 +71,15 @@ class PrestamoForm(forms.ModelForm):
 
     class Meta:
         model = Prestamo
-        fields = ['monto_solicitado', 'tasa_interes_anual', 'plazo_meses', 'frecuencia_pago', 'tipo_credito', 'destino']
+        fields = ['monto_solicitado', 'tasa_interes_mensual', 'plazo_meses', 'frecuencia_pago', 'tipo_credito', 'destino']
         widgets = {
             'destino': forms.RadioSelect,
             'tipo_credito': forms.RadioSelect,
-            'tasa_interes_anual': forms.Select(choices=TASA_INTERES_CHOICES),
+            'tasa_interes_mensual': forms.Select(choices=TASA_INTERES_CHOICES),
         }
 
     field_order = [
-        'numero_identificacion_cliente', 'monto_solicitado', 'tasa_interes_anual',
+        'numero_identificacion_cliente', 'monto_solicitado', 'tasa_interes_mensual',
         'plazo_meses', 'frecuencia_pago', 'tipo_credito', 'destino',
     ]
 
@@ -109,7 +109,10 @@ class PrestamoForm(forms.ModelForm):
 
 
 class PagoCuotaForm(forms.Form):
-    monto = forms.DecimalField(max_digits=12, decimal_places=2, min_value=0.01, label='Monto a pagar')
+    monto = forms.DecimalField(
+        max_digits=12, decimal_places=2, min_value=0.01, label='Monto a pagar',
+        help_text='Puede ser menor a la cuota (abono parcial) o mayor (el exceso se abona a capital).',
+    )
     numero_comprobante = forms.CharField(max_length=30, required=False, label='N° de comprobante externo (opcional)')
 
 

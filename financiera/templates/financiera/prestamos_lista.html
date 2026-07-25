@@ -31,7 +31,7 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Identificador</th>
+                    <th>Código de Crédito</th>
                     <th>Cliente</th>
                     <th>DNI</th>
                     <th>Monto</th>
@@ -42,8 +42,8 @@
             <tbody>
                 {% for prestamo in prestamos %}
                     <tr>
-                        <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
-                        <td><a class="link" href="{% url 'financiera:prestamo_detalle' prestamo.pk %}">{{ prestamo.cliente }}</a></td>
+                        <td>{{ prestamo.codigo_credito }}</td>
+                        <td><a class="link" href="{% url 'financiera:prestamo_detalle' prestamo.pk %}">{{ prestamo.cliente.nombre_completo }}</a></td>
                         <td>{{ prestamo.cliente.numero_identificacion }}</td>
                         <td>L {{ prestamo.monto_solicitado }}</td>
                         <td>

@@ -10,7 +10,13 @@
         </div>
         <p class="subsection-note"><strong>Crédito:</strong> {{ cuota.prestamo.codigo_credito }} — {{ cuota.prestamo.cliente }}</p>
         <p class="subsection-note"><strong>Cuota N°:</strong> {{ cuota.numero_cuota }} — Vence: {{ cuota.fecha_vencimiento|date:'d/m/Y' }}</p>
-        <p class="subsection-note"><strong>Total cuota:</strong> L {{ cuota.monto_total_cuota }} — <strong>Pagado:</strong> L {{ cuota.monto_pagado }} — <strong>Saldo pendiente:</strong> L {{ saldo_pendiente }}</p>
+        <p class="subsection-note"><strong>Total cuota:</strong> L {{ cuota.monto_total_cuota|floatformat:2 }} — <strong>Pagado:</strong> L {{ cuota.monto_pagado|floatformat:2 }} — <strong>Saldo pendiente:</strong> L {{ saldo_pendiente|floatformat:2 }}</p>
+        {% if mora_acumulada %}
+        <p class="subsection-note" style="color: var(--danger-text);">
+            <strong>Mora acumulada ({{ cuota.meses_atraso }} mes{{ cuota.meses_atraso|pluralize:'es' }} de atraso):</strong> L {{ mora_acumulada|floatformat:2 }}
+            — <strong>Total a pagar hoy:</strong> L {{ total_a_pagar|floatformat:2 }}
+        </p>
+        {% endif %}
 
         <form method="POST">
             {% csrf_token %}
