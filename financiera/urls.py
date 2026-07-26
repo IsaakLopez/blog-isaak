@@ -18,6 +18,7 @@ urlpatterns = [
     path('prestamos/<int:pk>/solicitud/', views.generar_solicitud_view, name='generar_solicitud'),
     path('prestamos/<int:pk>/recibo-desembolso/', views.generar_recibo_desembolso_view, name='generar_recibo_desembolso'),
     path('prestamos/<int:pk>/pagare/', views.generar_pagare_view, name='generar_pagare'),
+    path('prestamos/<int:pk>/amortizacion/', views.generar_amortizacion_view, name='generar_amortizacion'),
 
     path('cuotas/<int:pk>/pagar/', views.registrar_pago, name='registrar_pago'),
     path('transacciones/<int:pk>/recibo-pago/', views.generar_recibo_pago_view, name='generar_recibo_pago'),

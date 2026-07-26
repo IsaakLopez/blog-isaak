@@ -103,6 +103,14 @@ h1, h2, h3, h4, h5, h6 { margin: 0 0 4px; font-weight: 700; }
     color: #fff;
 }
 
+.brand-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
 .nav-toggle {
     display: none;
     align-items: center;
@@ -782,6 +790,12 @@ input:focus, select:focus, textarea:focus {
     width: 52px; height: 52px; border-radius: 14px;
     display: flex; align-items: center; justify-content: center;
     background: var(--dark); color: #fff;
+    margin: 0 auto 14px;
+}
+.auth-logo {
+    width: 84px; height: 84px; border-radius: 16px;
+    object-fit: cover;
+    display: block;
     margin: 0 auto 14px;
 }
 .auth-card h1 { font-size: 1.3rem; }

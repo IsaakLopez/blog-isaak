@@ -27,8 +27,9 @@ PLANTILLA_SOLICITUD_PATH = (
 PLANTILLA_RECIBO_DESEMBOLSO_PATH = (
     Path(__file__).resolve().parent.parent / 'templates_docx' / 'RECIBO_DE_DESEMBOLSO.docx'
 )
-PLANTILLA_PAGARE_PATH = Path(__file__).resolve().parent.parent / 'templates_docx' / 'PAGARÉ.docx'
+PLANTILLA_PAGARE_PATH = Path(__file__).resolve().parent.parent / 'templates_docx' / 'PLANTILLA_PAGARE.docx'
 PLANTILLA_RECIBO_PAGO_PATH = Path(__file__).resolve().parent.parent / 'templates_docx' / 'RECIBO_DE_PAGO.docx'
+PLANTILLA_AMORTIZACION_PATH = Path(__file__).resolve().parent.parent / 'templates_docx' / 'AMORTIZACION.docx'
 
 _MESES_ES = {
     1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril', 5: 'Mayo', 6: 'Junio',
@@ -107,21 +108,24 @@ def _marcar(mapa_chk, valor_seleccionado):
     return {nombre: (' ☒' if clave == valor_seleccionado else ' ☐') for clave, nombre in mapa_chk.items()}
 
 
-def _celdas_unicas(documento):
-    """Itera las celdas de todas las tablas del documento sin repetir. Una
+def _celdas_unicas(contenedor):
+    """Itera las celdas de todas las tablas de `contenedor` (el documento o
+    una celda) sin repetir, bajando también a las tablas anidadas dentro de
+    cada celda (ej. una caja con borde propio dentro de otra tabla). Una
     celda fusionada a lo ancho de varias columnas aparece una vez por cada
     columna que cubre en `fila.cells` -- se descartan esos duplicados. OJO:
     se descarta por el elemento `_tc` en sí, no por `id(_tc)`, porque lxml
     crea un proxy Python efímero en cada acceso y `id(_tc)` puede reciclarse
     entre columnas distintas."""
     vistas = set()
-    for tabla in documento.tables:
+    for tabla in contenedor.tables:
         for fila in tabla.rows:
             for celda in fila.cells:
                 if celda._tc in vistas:
                     continue
                 vistas.add(celda._tc)
                 yield celda
+                yield from _celdas_unicas(celda)
 
 
 def _parrafos_del_documento(documento):
@@ -155,20 +159,20 @@ def _insertar_firma_antes_de(buffer_docx, imagen_firma, coincide):
     return salida
 
 
-def _insertar_firma_en_caja(buffer_docx, imagen_firma, texto_titulo):
-    """Abre el .docx ya renderizado y coloca la imagen de la firma en el
-    primer párrafo (vacío) de la celda reservada para firmar, justo debajo
-    de la celda cuyo texto es `texto_titulo` (ej. "Firma del suscriptor"),
-    dentro de la misma tabla."""
+def _insertar_firma_despues_de(buffer_docx, imagen_firma, coincide):
+    """Abre el .docx ya renderizado e inserta la imagen de la firma en un
+    párrafo nuevo, justo DESPUÉS del primer párrafo cuyo texto (en
+    mayúsculas) cumple `coincide` -- ej. dentro de la misma celda/caja que
+    dice "Firma del suscriptor", sin depender de que exista una fila o
+    párrafo en blanco reservado debajo."""
     documento = DocumentoWord(buffer_docx)
-    for tabla in documento.tables:
-        for indice_fila, fila in enumerate(tabla.rows):
-            if fila.cells[0].text.strip().upper() == texto_titulo and indice_fila + 1 < len(tabla.rows):
-                celda_destino = tabla.rows[indice_fila + 1].cells[0]
-                parrafo_destino = celda_destino.paragraphs[0]
-                parrafo_destino.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                _insertar_imagen(parrafo_destino, imagen_firma)
-                break
+    for parrafo in _parrafos_del_documento(documento):
+        if coincide(parrafo.text.strip().upper()):
+            nuevo_parrafo = documento.add_paragraph()
+            nuevo_parrafo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            _insertar_imagen(nuevo_parrafo, imagen_firma)
+            parrafo._p.addnext(nuevo_parrafo._p)
+            break
 
     salida = BytesIO()
     documento.save(salida)
@@ -322,29 +326,43 @@ def generar_recibo_desembolso(prestamo, imagen_firma=None):
 
 
 def generar_pagare(prestamo, imagen_firma=None):
-    """Rellena la plantilla oficial de Pagaré con los datos del préstamo ya
-    desembolsado. Devuelve un BytesIO listo para descargar (no se persiste
-    en el modelo, se genera al vuelo).
+    """Rellena la plantilla oficial de Pagaré con los datos del préstamo.
+    Disponible desde que el préstamo queda Aprobado (no hace falta esperar
+    al desembolso: el pagaré suele firmarse como parte del mismo trámite).
+    Devuelve un BytesIO listo para descargar (no se persiste en el modelo,
+    se genera al vuelo).
 
-    - "Fecha de expedición" es la fecha de desembolso (cuando se firma el
-      pagaré, junto con el Recibo de Desembolso).
-    - "Fecha de pago" es el vencimiento de la última cuota de la tabla de
-      amortización (cuándo el préstamo queda totalmente pagado).
+    - "Fecha de expedición" es la fecha de desembolso si ya ocurrió; si el
+      préstamo solo está Aprobado, se usa la fecha de aprobación.
+    - "Fecha de pago" es el vencimiento de la última cuota. Si el préstamo
+      ya tiene tabla de amortización (desembolsado), se usa la real; si
+      todavía no (solo aprobado), se proyecta una con los mismos datos que
+      usará `generar_tabla_amortizacion` al desembolsar.
     - `imagen_firma` (BytesIO opcional) es la imagen de firma digital ya
       procesada; si se recibe, se coloca dentro de la caja "Firma del
       suscriptor". Si es None, se genera igual que antes, para firmar a mano.
     """
     if not PLANTILLA_PAGARE_PATH.exists():
         raise FileNotFoundError('No existe la plantilla de pagaré.')
-    if not prestamo.fecha_desembolso:
-        raise ValueError('El préstamo todavía no ha sido desembolsado.')
+    if not prestamo.fecha_aprobacion:
+        raise ValueError('El préstamo todavía no ha sido aprobado.')
+
+    fecha_expedicion = timezone.localtime(prestamo.fecha_desembolso or prestamo.fecha_aprobacion)
 
     ultima_cuota = prestamo.cuotas.order_by('-numero_cuota').first()
-    if not ultima_cuota:
-        raise ValueError('El préstamo no tiene tabla de amortización generada.')
+    if ultima_cuota:
+        fecha_pago = ultima_cuota.fecha_vencimiento
+    else:
+        from financiera.services.amortizacion import generar_tabla_amortizacion
 
-    fecha_expedicion = timezone.localtime(prestamo.fecha_desembolso)
-    fecha_pago = ultima_cuota.fecha_vencimiento
+        tabla_proyectada = generar_tabla_amortizacion(
+            monto=prestamo.monto_solicitado,
+            tasa_interes_mensual=prestamo.tasa_interes_mensual,
+            plazo_meses=prestamo.plazo_meses,
+            frecuencia_pago=prestamo.frecuencia_pago,
+            fecha_inicio=fecha_expedicion.date(),
+        )
+        fecha_pago = tabla_proyectada[-1]['fecha_vencimiento']
     contexto = {
         'ciudad_pagare': CIUDAD_INSTITUCION,
         'dia_expedicion': fecha_expedicion.day,
@@ -365,7 +383,7 @@ def generar_pagare(prestamo, imagen_firma=None):
     buffer.seek(0)
 
     if imagen_firma is not None:
-        buffer = _insertar_firma_en_caja(buffer, imagen_firma, TEXTO_FIRMA_SUSCRIPTOR)
+        buffer = _insertar_firma_despues_de(buffer, imagen_firma, lambda texto: texto == TEXTO_FIRMA_SUSCRIPTOR)
 
     return buffer
 
@@ -392,6 +410,53 @@ def generar_recibo_pago(transaccion):
     }
 
     documento = DocxTemplate(str(PLANTILLA_RECIBO_PAGO_PATH))
+    documento.render(contexto)
+
+    buffer = BytesIO()
+    documento.save(buffer)
+    buffer.seek(0)
+    return buffer
+
+
+def generar_documento_amortizacion(prestamo):
+    """Rellena la plantilla oficial de Tabla de Amortización con los datos
+    generales del préstamo y su tabla de cuotas real (una fila por cuota,
+    repetida con el bucle `{%tr for cuota in cuotas %}` de docxtpl). Devuelve
+    un BytesIO listo para descargar (no se persiste en el modelo, se genera
+    al vuelo). Requiere que el préstamo ya esté desembolsado (que exista la
+    tabla de amortización real)."""
+    if not PLANTILLA_AMORTIZACION_PATH.exists():
+        raise FileNotFoundError('No existe la plantilla de tabla de amortización.')
+
+    cuotas = list(prestamo.cuotas.order_by('numero_cuota'))
+    if not cuotas:
+        raise ValueError('El préstamo no tiene tabla de amortización generada.')
+
+    primera_cuota = cuotas[0]
+    ultima_cuota = cuotas[-1]
+    contexto = {
+        'cliente_nombre': prestamo.cliente.nombre_completo,
+        'tipo_credito': prestamo.get_tipo_credito_display(),
+        'monto_solicitado': f'L {prestamo.monto_solicitado:,.2f}',
+        'tasa_mensual': f'{prestamo.tasa_interes_mensual}%',
+        'plazo_meses': prestamo.plazo_meses,
+        'cuota_fija': f'L {primera_cuota.monto_total_cuota:,.2f}',
+        'fecha_inicio_pago': primera_cuota.fecha_vencimiento.strftime('%d/%m/%Y'),
+        'fecha_fin_pago': ultima_cuota.fecha_vencimiento.strftime('%d/%m/%Y'),
+        'cuotas': [
+            {
+                'numero_cuota': cuota.numero_cuota,
+                'fecha_vencimiento': cuota.fecha_vencimiento.strftime('%d/%m/%Y'),
+                'monto_capital': f'L {cuota.monto_capital:,.2f}',
+                'monto_interes': f'L {cuota.monto_interes:,.2f}',
+                'monto_total_cuota': f'L {cuota.monto_total_cuota:,.2f}',
+                'saldo': f'L {cuota.saldo:,.2f}',
+            }
+            for cuota in cuotas
+        ],
+    }
+
+    documento = DocxTemplate(str(PLANTILLA_AMORTIZACION_PATH))
     documento.render(contexto)
 
     buffer = BytesIO()

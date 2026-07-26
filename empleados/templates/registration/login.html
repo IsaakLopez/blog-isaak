@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión · Portal IMFDC</title>
+    <title>Iniciar Sesión · Portal IMFDC - Fincel</title>
+    <link rel="icon" type="image/jpeg" href="{% static 'img/logo.jpg' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
@@ -12,8 +13,8 @@
 <body>
     <div class="auth-shell">
         <div class="auth-card">
-            <span class="icon-badge">{% include 'partials/_icon.html' with name='shield' size=24 %}</span>
-            <h1>Portal IMFDC</h1>
+            <img class="auth-logo" src="{% static 'img/logo.jpg' %}" alt="IMFDC - Fincel">
+            <h1>Portal IMFDC - Fincel</h1>
             <p class="subtitle">Acceso administrativo</p>
 
             <form method="POST">

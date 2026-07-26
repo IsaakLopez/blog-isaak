@@ -70,10 +70,10 @@ def _notificar_credenciales(empleado, password):
         return False
     try:
         send_mail(
-            subject='Tu cuenta en Portal IMFDC',
+            subject='Tu cuenta en Portal IMFDC - Fincel',
             message=(
                 f'Hola {empleado.nombre},\n\n'
-                f'Se creó tu cuenta de acceso a Portal IMFDC con cargo "{empleado.get_cargo_display()}".\n\n'
+                f'Se creó tu cuenta de acceso a Portal IMFDC - Fincel con cargo "{empleado.get_cargo_display()}".\n\n'
                 f'Usuario: {empleado.user.username}\n'
                 f'Contraseña: {password}\n\n'
                 'Por seguridad, cambia tu contraseña apenas puedas pidiéndole al '

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}{{ prestamo.codigo_credito }} · Portal IMFDC{% endblock %}
+{% block title %}{{ prestamo.codigo_credito }} · Portal IMFDC - Fincel{% endblock %}
 
 {% block content %}
 <div class="card">
@@ -41,13 +41,18 @@
         <button type="button" class="btn btn-outline" data-modal-abrir="modal-solicitud">
             {% include 'partials/_icon.html' with name='file-text' size=16 %}Generar Solicitud
         </button>
+        {% if prestamo.fecha_aprobacion %}
+            <button type="button" class="btn btn-outline" data-modal-abrir="modal-pagare">
+                {% include 'partials/_icon.html' with name='file-text' size=16 %}Pagaré
+            </button>
+        {% endif %}
         {% if prestamo.fecha_desembolso %}
             <button type="button" class="btn btn-outline" data-modal-abrir="modal-recibo-desembolso">
                 {% include 'partials/_icon.html' with name='file-text' size=16 %}Recibo de Desembolso
             </button>
-            <button type="button" class="btn btn-outline" data-modal-abrir="modal-pagare">
-                {% include 'partials/_icon.html' with name='file-text' size=16 %}Pagaré
-            </button>
+            <a href="{% url 'financiera:generar_amortizacion' prestamo.pk %}" class="btn btn-outline">
+                {% include 'partials/_icon.html' with name='file-text' size=16 %}Tabla de Amortización
+            </a>
         {% endif %}
 
         {% for nuevo_estado, etiqueta in transiciones_disponibles %}

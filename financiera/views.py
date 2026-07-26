@@ -243,6 +243,22 @@ def generar_pagare_view(request, pk):
     )
 
 
+@login_required
+def generar_amortizacion_view(request, pk):
+    prestamo = get_object_or_404(Prestamo.objects.select_related('cliente'), pk=pk)
+    from .services.word_generator import generar_documento_amortizacion
+    try:
+        buffer = generar_documento_amortizacion(prestamo)
+    except (FileNotFoundError, ValueError) as exc:
+        messages.error(request, str(exc))
+        return redirect('financiera:prestamo_detalle', pk=pk)
+    return FileResponse(
+        buffer,
+        as_attachment=True,
+        filename=f'Tabla_Amortizacion_{prestamo.codigo_credito}.docx',
+    )
+
+
 @requiere_permiso('cobrar')
 def registrar_pago(request, pk):
     cuota = get_object_or_404(CuotaAmortizacion.objects.select_related('prestamo'), pk=pk)

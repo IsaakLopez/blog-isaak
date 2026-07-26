@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Portal IMFDC{% endblock %}</title>
+    <title>{% block title %}Portal IMFDC - Fincel{% endblock %}</title>
+    <link rel="icon" type="image/jpeg" href="{% static 'img/logo.jpg' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
@@ -18,8 +19,8 @@
         <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Abrir menú">
             {% include 'partials/_icon.html' with name='menu' size=20 %}
         </button>
-        <span class="icon-badge">{% include 'partials/_icon.html' with name='shield' size=18 %}</span>
-        Portal IMFDC
+        <img class="brand-logo" src="{% static 'img/logo.jpg' %}" alt="IMFDC - Fincel">
+        Portal IMFDC - Fincel
     </div>
 
     <nav class="nav-pill">
@@ -115,7 +116,7 @@
 </main>
 
 <footer class="site-footer">
-    Portal IMFDC &mdash; Desarrollado por <a href="https://isaak.net" target="_blank">Isaak.net</a>
+    Portal IMFDC - Fincel &mdash; Desarrollado por <a href="https://isaak.net" target="_blank">Isaak.net</a>
 </footer>
 
 <script>
