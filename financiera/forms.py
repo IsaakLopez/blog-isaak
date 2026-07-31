@@ -1,4 +1,7 @@
+from decimal import Decimal
+
 from django import forms
+from django.utils import timezone
 
 from .models import Cliente, Prestamo
 
@@ -139,3 +142,107 @@ class FirmaDocumentoForm(forms.Form):
         if cleaned_data.get('tipo_firma') == self.TIPO_FIRMA_DIGITAL and not cleaned_data.get('firma_imagen'):
             self.add_error('firma_imagen', 'Debes subir una imagen de la firma para la firma digital.')
         return cleaned_data
+
+
+# --- Asistente de migración de créditos históricos (solo Gerente/Admin) ---
+
+class MigracionPaso1Form(forms.Form):
+    """Datos del crédito histórico a migrar. El cliente debe existir ya en
+    el sistema (se registra por el flujo normal de Clientes) -- aquí solo
+    se busca por DNI, igual que en `PrestamoForm`."""
+    numero_identificacion_cliente = forms.CharField(
+        label='No. de Identificación del Cliente', max_length=20,
+        help_text='El cliente debe estar registrado ya en el sistema.',
+    )
+    monto_solicitado = forms.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal('0.01'), label='Monto del Crédito')
+    tasa_interes_mensual = forms.ChoiceField(choices=TASA_INTERES_CHOICES, label='Tasa de Interés Mensual (%)')
+    plazo_meses = forms.IntegerField(min_value=1, label='Plazo (meses)')
+    frecuencia_pago = forms.ChoiceField(choices=Prestamo.FRECUENCIA_CHOICES, label='Frecuencia de Pago')
+    tipo_credito = forms.ChoiceField(choices=Prestamo.TIPO_CREDITO_CHOICES, label='Tipo de Crédito')
+    destino = forms.ChoiceField(choices=Prestamo.DESTINO_CHOICES, label='Destino del Préstamo')
+    fecha_inicio = forms.DateField(
+        widget=FECHA_WIDGET, label='Fecha de inicio (desembolso real del crédito)',
+        help_text='La fecha real en que se entregó el dinero, no la fecha de hoy.',
+    )
+
+    def clean_numero_identificacion_cliente(self):
+        numero = self.cleaned_data['numero_identificacion_cliente'].strip()
+        try:
+            self.cliente_encontrado = Cliente.objects.get(numero_identificacion=numero)
+        except Cliente.DoesNotExist:
+            raise forms.ValidationError(
+                'No existe ningún cliente registrado con ese número de identificación. '
+                'Regístralo primero en el módulo de Clientes.'
+            )
+        return numero
+
+    def clean_fecha_inicio(self):
+        fecha = self.cleaned_data['fecha_inicio']
+        if fecha > timezone.localdate():
+            raise forms.ValidationError('La fecha de inicio no puede ser en el futuro.')
+        return fecha
+
+
+class MigracionPaso2Form(forms.Form):
+    cuotas_pagadas = forms.IntegerField(
+        min_value=0, label='¿Cuántas cuotas ya están pagadas?',
+        help_text='Puedes dejarlo en 0 si el crédito no tiene ningún pago todavía.',
+    )
+
+    def __init__(self, *args, total_cuotas, **kwargs):
+        self.total_cuotas = total_cuotas
+        super().__init__(*args, **kwargs)
+        self.fields['cuotas_pagadas'].help_text += f' Este crédito tiene {total_cuotas} cuotas en total.'
+
+    def clean_cuotas_pagadas(self):
+        cantidad = self.cleaned_data['cuotas_pagadas']
+        if cantidad > self.total_cuotas:
+            raise forms.ValidationError(f'El crédito solo tiene {self.total_cuotas} cuotas en total.')
+        return cantidad
+
+
+class MigracionPaso3Form(forms.Form):
+    """Una fecha y un monto por cada cuota ya pagada, precargados con lo
+    programado pero editables (para reflejar pagos parciales o con mora que
+    ya se cobró en su momento). Campos dinámicos: `fecha_1`/`monto_1`,
+    `fecha_2`/`monto_2`, ... según `cuotas_a_migrar`."""
+
+    def __init__(self, *args, cuotas_a_migrar, **kwargs):
+        """`cuotas_a_migrar`: lista de dicts con 'numero_cuota', 'fecha_vencimiento'
+        (date) y 'monto_total_cuota' (Decimal), en orden."""
+        self.cuotas_a_migrar = cuotas_a_migrar
+        super().__init__(*args, **kwargs)
+        for cuota in cuotas_a_migrar:
+            numero = cuota['numero_cuota']
+            self.fields[f'fecha_{numero}'] = forms.DateField(
+                widget=FECHA_WIDGET, label=f'Cuota {numero} — fecha de pago',
+                initial=cuota['fecha_vencimiento'],
+            )
+            self.fields[f'monto_{numero}'] = forms.DecimalField(
+                max_digits=12, decimal_places=2, min_value=Decimal('0.01'),
+                label=f'Cuota {numero} — monto pagado',
+                initial=cuota['monto_total_cuota'],
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        hoy = timezone.localdate()
+        for cuota in self.cuotas_a_migrar:
+            numero = cuota['numero_cuota']
+            fecha = cleaned_data.get(f'fecha_{numero}')
+            if fecha and fecha > hoy:
+                self.add_error(f'fecha_{numero}', 'No puede ser una fecha futura.')
+        return cleaned_data
+
+    def obtener_pagos_migrados(self):
+        """Devuelve la lista de (numero_cuota, fecha_pago, monto) lista para
+        pasarle a `migrar_credito`, en orden de numero_cuota."""
+        pagos = []
+        for cuota in self.cuotas_a_migrar:
+            numero = cuota['numero_cuota']
+            pagos.append((
+                numero,
+                self.cleaned_data[f'fecha_{numero}'],
+                self.cleaned_data[f'monto_{numero}'],
+            ))
+        return pagos

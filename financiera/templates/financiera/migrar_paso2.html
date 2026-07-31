@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Migrar Crédito · Paso 2 · Portal IMFDC - Fincel{% endblock %}
+
+{% block content %}
+<div style="max-width: 560px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-title">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='upload' size=16 %}</span>
+            Migrar Crédito Histórico — Paso 2 de 4
+        </div>
+        <p class="subsection-note">
+            <strong>{{ datos.cliente_nombre }}</strong> ({{ datos.cliente_dni }}) — L {{ datos.monto_solicitado }},
+            {{ total_cuotas }} cuota{{ total_cuotas|pluralize }} en total, iniciando {{ datos.fecha_inicio }}.
+        </p>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="field">
+                <label for="{{ form.cuotas_pagadas.id_for_label }}">{{ form.cuotas_pagadas.label }}</label>
+                {{ form.cuotas_pagadas }}
+                <span class="hint">{{ form.cuotas_pagadas.help_text }}</span>
+                {% if form.cuotas_pagadas.errors %}<span class="field-error">{{ form.cuotas_pagadas.errors|join:', ' }}</span>{% endif %}
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top: 18px;">
+                <a href="{% url 'financiera:migrar_paso1' %}" class="btn btn-outline">
+                    {% include 'partials/_icon.html' with name='arrow-left' size=14 %}Volver
+                </a>
+                <button type="submit" class="btn btn-accent">
+                    {% include 'partials/_icon.html' with name='check' size=16 %}Continuar
+                </button>
+                <a href="{% url 'financiera:migrar_cancelar' %}" class="btn btn-outline">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Migrar Crédito · Paso 1 · Portal IMFDC - Fincel{% endblock %}
+
+{% block content %}
+<div style="max-width: 720px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-title">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='upload' size=16 %}</span>
+            Migrar Crédito Histórico — Paso 1 de 4
+        </div>
+        <p class="subsection-note">Datos del crédito y fecha real en que inició (el cliente debe estar registrado ya en el sistema).</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-error">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="grid-2">
+                <div class="field span-2">
+                    <label for="{{ form.numero_identificacion_cliente.id_for_label }}">No. de Identificación del Cliente</label>
+                    {{ form.numero_identificacion_cliente }}
+                    <span class="hint">{{ form.numero_identificacion_cliente.help_text }}</span>
+                    {% if form.numero_identificacion_cliente.errors %}<span class="field-error">{{ form.numero_identificacion_cliente.errors|join:', ' }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ form.monto_solicitado.id_for_label }}">Monto del Crédito</label>
+                    {{ form.monto_solicitado }}
+                    {% if form.monto_solicitado.errors %}<span class="field-error">{{ form.monto_solicitado.errors|join:', ' }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ form.tasa_interes_mensual.id_for_label }}">Tasa de Interés Mensual (%)</label>
+                    {{ form.tasa_interes_mensual }}
+                </div>
+                <div class="field">
+                    <label for="{{ form.plazo_meses.id_for_label }}">Plazo (meses)</label>
+                    {{ form.plazo_meses }}
+                    {% if form.plazo_meses.errors %}<span class="field-error">{{ form.plazo_meses.errors|join:', ' }}</span>{% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ form.frecuencia_pago.id_for_label }}">Frecuencia de Pago</label>
+                    {{ form.frecuencia_pago }}
+                </div>
+                <div class="field">
+                    <label for="{{ form.tipo_credito.id_for_label }}">Tipo de Crédito</label>
+                    {{ form.tipo_credito }}
+                </div>
+                <div class="field">
+                    <label for="{{ form.destino.id_for_label }}">Destino del Préstamo</label>
+                    {{ form.destino }}
+                </div>
+                <div class="field">
+                    <label for="{{ form.fecha_inicio.id_for_label }}">Fecha de Inicio (desembolso real)</label>
+                    {{ form.fecha_inicio }}
+                    <span class="hint">{{ form.fecha_inicio.help_text }}</span>
+                    {% if form.fecha_inicio.errors %}<span class="field-error">{{ form.fecha_inicio.errors|join:', ' }}</span>{% endif %}
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top: 18px;">
+                <button type="submit" class="btn btn-accent">
+                    {% include 'partials/_icon.html' with name='check' size=16 %}Continuar
+                </button>
+                <a href="{% url 'financiera:migrar_cancelar' %}" class="btn btn-outline">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

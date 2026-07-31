@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Migrar Crédito · Resumen · Portal IMFDC - Fincel{% endblock %}
+
+{% block content %}
+<div style="max-width: 860px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-title">
+            <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='upload' size=16 %}</span>
+            Migrar Crédito Histórico — Resumen (Paso 4 de 4)
+        </div>
+        <p class="subsection-note">Revisa toda la información antes de guardar — no podrás editarla después sin eliminar el crédito.</p>
+
+        <div class="grid-2" style="margin-top: 10px;">
+            <div class="info-item">
+                <span class="info-label">Cliente</span>
+                <span class="info-value">{{ cliente.nombre_completo }} ({{ cliente.numero_identificacion }})</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Monto del Crédito</span>
+                <span class="info-value">L {{ datos.monto_solicitado }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Tasa Mensual</span>
+                <span class="info-value">{{ datos.tasa_interes_mensual }}%</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Plazo</span>
+                <span class="info-value">{{ datos.plazo_meses }} meses ({{ total_cuotas }} cuotas)</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Frecuencia de Pago</span>
+                <span class="info-value">{{ datos.frecuencia_pago }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Fecha de Inicio</span>
+                <span class="info-value">{{ datos.fecha_inicio }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Destino</span>
+                <span class="info-value">{{ datos.destino }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Cuotas ya pagadas</span>
+                <span class="info-value">{{ datos.cuotas_pagadas }} de {{ total_cuotas }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if filas_resumen %}
+    <div class="card">
+        <div class="card-title" style="margin-bottom: 10px;">Cuotas que se van a registrar como pagadas</div>
+        <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr><th>Cuota</th><th>Programado</th><th>Fecha de pago</th><th>Monto a registrar</th><th>Diferencia</th></tr>
+            </thead>
+            <tbody>
+                {% for fila in filas_resumen %}
+                <tr>
+                    <td>{{ fila.numero_cuota }}</td>
+                    <td>{{ fila.fecha_programada|date:'d/m/Y' }} — L {{ fila.monto_programado }}</td>
+                    <td>{{ fila.fecha_pago }}</td>
+                    <td>L {{ fila.monto_a_registrar }}</td>
+                    <td>
+                        {% if fila.diferencia > 0 %}
+                            <span class="badge badge-warn">+L {{ fila.diferencia }} (abono a capital / mora)</span>
+                        {% elif fila.diferencia < 0 %}
+                            <span class="badge badge-danger">-L {{ fila.diferencia }} (parcial)</span>
+                        {% else %}
+                            <span class="badge badge-success">Exacto</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="alert alert-info">
+            Al confirmar, el crédito quedará <strong>Desembolsado</strong> con fecha {{ datos.fecha_inicio }}
+            y con la tabla de amortización completa generada. Los pagos indicados arriba se aplicarán con
+            su fecha real (afectan la mora calculada exactamente igual que un cobro en vivo).
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="{% if datos.cuotas_pagadas > 0 %}{% url 'financiera:migrar_paso3' %}{% else %}{% url 'financiera:migrar_paso2' %}{% endif %}" class="btn btn-outline">
+                    {% include 'partials/_icon.html' with name='arrow-left' size=14 %}Volver
+                </a>
+                <button type="submit" class="btn btn-accent">
+                    {% include 'partials/_icon.html' with name='check' size=16 %}Confirmar y Guardar Crédito
+                </button>
+                <a href="{% url 'financiera:migrar_cancelar' %}" class="btn btn-outline">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

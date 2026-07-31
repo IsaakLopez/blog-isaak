@@ -1,3 +1,4 @@
+from datetime import datetime, time
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -420,16 +421,39 @@ class CuotaAmortizacion(models.Model):
         """Lo que falta para terminar de pagar ESTA cuota (sin contar mora)."""
         return (self.monto_total_cuota - self.monto_pagado).quantize(Decimal('0.01'))
 
-    @property
-    def dias_atraso(self):
+    def _dias_atraso_a(self, fecha):
+        """Días de atraso respecto a `fecha` (no necesariamente hoy -- lo usa
+        también la migración de créditos históricos para calcular mora tal
+        como habría sido en la fecha real de un pago pasado)."""
         if self.estado_cuota == self.ESTADO_PAGADO or self.saldo_pendiente <= 0:
             return 0
-        dias = (timezone.localdate() - self.fecha_vencimiento).days
+        dias = (fecha - self.fecha_vencimiento).days
         return max(dias, 0)
+
+    def _mora_generada_a(self, fecha):
+        """Mora bruta generada hasta `fecha`: 2% simple por cada mes completo
+        de atraso, sobre el saldo pendiente ACTUAL de la cuota (si tuvo un
+        abono, la mora se recalcula sobre lo que sigue debiendo, no sobre el
+        monto original). No descuenta lo ya pagado de mora."""
+        meses = self._dias_atraso_a(fecha) // self.DIAS_POR_MES_MORA
+        saldo = self.saldo_pendiente
+        if meses <= 0 or saldo <= 0:
+            return Decimal('0.00')
+        return (self.TASA_MORA_MENSUAL * meses * saldo).quantize(Decimal('0.01'))
+
+    def _mora_acumulada_a(self, fecha):
+        """Mora que faltaría pagar en `fecha` (la generada hasta esa fecha,
+        menos lo que ya se pagó de mora)."""
+        pendiente = self._mora_generada_a(fecha) - self.mora_pagada
+        return pendiente if pendiente > 0 else Decimal('0.00')
+
+    @property
+    def dias_atraso(self):
+        return self._dias_atraso_a(timezone.localdate())
 
     @property
     def meses_atraso(self):
-        return self.dias_atraso // self.DIAS_POR_MES_MORA
+        return self._dias_atraso_a(timezone.localdate()) // self.DIAS_POR_MES_MORA
 
     @property
     def mora_pagada(self):
@@ -440,23 +464,13 @@ class CuotaAmortizacion(models.Model):
 
     @property
     def mora_generada(self):
-        """Mora bruta generada hasta hoy: 2% simple por cada mes completo de
-        atraso, sobre el saldo pendiente ACTUAL de la cuota (si tuvo un
-        abono, la mora se recalcula sobre lo que sigue debiendo, no sobre el
-        monto original). No descuenta lo ya pagado de mora -- para eso está
-        `mora_acumulada`."""
-        meses = self.meses_atraso
-        saldo = self.saldo_pendiente
-        if meses <= 0 or saldo <= 0:
-            return Decimal('0.00')
-        return (self.TASA_MORA_MENSUAL * meses * saldo).quantize(Decimal('0.01'))
+        """Mora bruta generada hasta hoy. Ver `_mora_generada_a`."""
+        return self._mora_generada_a(timezone.localdate())
 
     @property
     def mora_acumulada(self):
-        """Mora que todavía falta pagar (la generada hasta hoy, menos lo que
-        ya se pagó de mora)."""
-        pendiente = self.mora_generada - self.mora_pagada
-        return pendiente if pendiente > 0 else Decimal('0.00')
+        """Mora que todavía falta pagar hoy. Ver `_mora_acumulada_a`."""
+        return self._mora_acumulada_a(timezone.localdate())
 
     @property
     def total_a_pagar(self):
@@ -464,7 +478,7 @@ class CuotaAmortizacion(models.Model):
         cuota: su saldo pendiente más la mora acumulada."""
         return self.saldo_pendiente + self.mora_acumulada
 
-    def registrar_pago(self, monto, cajero, numero_comprobante=''):
+    def registrar_pago(self, monto, cajero, numero_comprobante='', fecha_pago=None):
         """Aplica un pago sobre esta cuota. Acepta cualquier monto positivo,
         no solo el exacto de la cuota:
         - Si es MENOS que el saldo pendiente, es un abono parcial (la cuota
@@ -473,13 +487,20 @@ class CuotaAmortizacion(models.Model):
           acumulada (si hay) y luego el resto se aplica como abono a
           capital, reduciendo el saldo restante del préstamo (esta cuota y
           las futuras) -- el préstamo se termina de pagar antes, las cuotas
-          futuras mantienen su monto tal como están en la tabla original."""
+          futuras mantienen su monto tal como están en la tabla original.
+
+        `fecha_pago` (date, opcional) permite registrar un pago con fecha
+        retroactiva -- lo usa la migración de créditos históricos. La mora
+        se calcula respecto a esa fecha (no la de hoy), y al final se
+        corrige el `fecha_hora` de las transacciones creadas (que por ser
+        `auto_now_add` no se puede fijar al momento de crearlas)."""
         monto = Decimal(monto)
         if monto <= 0:
             raise ValidationError('El monto a pagar debe ser mayor a cero.')
 
+        fecha_efectiva = fecha_pago or timezone.localdate()
         saldo_cuota = self.saldo_pendiente
-        mora = self.mora_acumulada
+        mora = self._mora_acumulada_a(fecha_efectiva)
         tope_maximo = saldo_cuota + mora + self.saldo
         if monto > tope_maximo:
             raise ValidationError(
@@ -532,6 +553,12 @@ class CuotaAmortizacion(models.Model):
 
         if not self.prestamo.cuotas.exclude(estado_cuota=self.ESTADO_PAGADO).exists():
             self.prestamo.transicionar(Prestamo.ESTADO_LIQUIDADO, automatico=True)
+
+        if fecha_pago:
+            hora_historica = timezone.make_aware(datetime.combine(fecha_pago, time(12, 0)))
+            TransaccionCaja.objects.filter(
+                pk__in=[t.pk for t in transacciones_creadas]
+            ).update(fecha_hora=hora_historica)
 
         return transacciones_creadas
 

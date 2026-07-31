@@ -22,11 +22,12 @@ class Empleado(models.Model):
     CARGO_PERMISOS = {
         CARGO_ASESOR: {'crear_cliente', 'crear_credito'},
         CARGO_ANALISTA: {'crear_cliente', 'crear_credito', 'evaluar'},
-        CARGO_GERENTE: {'evaluar', 'aprobar', 'rechazar'},
+        CARGO_GERENTE: {'evaluar', 'aprobar', 'rechazar', 'eliminar_cliente', 'eliminar_credito', 'migrar_credito'},
         CARGO_CAJERO: {'desembolsar', 'cobrar'},
         CARGO_ADMIN: {
             'crear_cliente', 'crear_credito', 'evaluar', 'aprobar',
             'rechazar', 'desembolsar', 'cobrar',
+            'eliminar_cliente', 'eliminar_credito', 'migrar_credito',
         },
     }
 

@@ -8,9 +8,16 @@
             <span class="icon-badge-sm">{% include 'partials/_icon.html' with name='credit-card' size=16 %}</span>
             Solicitudes de Crédito
         </div>
-        <a href="{% url 'financiera:prestamo_crear' %}" class="btn btn-dark">
-            {% include 'partials/_icon.html' with name='plus' size=16 %}Nueva Solicitud
-        </a>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            {% if puede_migrar_credito %}
+            <a href="{% url 'financiera:migrar_paso1' %}" class="btn btn-outline">
+                {% include 'partials/_icon.html' with name='upload' size=16 %}Migrar Crédito
+            </a>
+            {% endif %}
+            <a href="{% url 'financiera:prestamo_crear' %}" class="btn btn-dark">
+                {% include 'partials/_icon.html' with name='plus' size=16 %}Nueva Solicitud
+            </a>
+        </div>
     </div>
 
     <form method="GET" class="search-form">

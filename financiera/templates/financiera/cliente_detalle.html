@@ -18,6 +18,11 @@
             <a href="{% url 'financiera:cliente_editar' cliente.pk %}" class="btn btn-outline btn-small">
                 {% include 'partials/_icon.html' with name='edit' size=14 %}Editar
             </a>
+            {% if puede_eliminar_cliente %}
+            <a href="{% url 'financiera:cliente_eliminar' cliente.pk %}" class="btn btn-outline btn-small" style="color: var(--danger-text);">
+                {% include 'partials/_icon.html' with name='trash' size=14 %}Eliminar
+            </a>
+            {% endif %}
         </div>
     </div>
 </div>
