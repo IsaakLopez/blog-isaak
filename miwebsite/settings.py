@@ -179,8 +179,11 @@ LOGIN_REDIRECT_URL = 'home'
 LOGIN_URL = 'login'
 
 
-# Seguridad — obligatorio en producción (Render.com), relajado en desarrollo local.
-if not DEBUG:
+# Seguridad — obligatorio detrás de HTTPS (Render.com); en instalaciones
+# locales sin TLS (ej. Docker en una LAN) se desactiva con USE_HTTPS=False
+# aunque DEBUG esté en False, para no romper cookies/redirects.
+USE_HTTPS = config('USE_HTTPS', default=not DEBUG, cast=bool)
+if USE_HTTPS:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
