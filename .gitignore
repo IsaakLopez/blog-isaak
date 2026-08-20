@@ -16,6 +16,7 @@ staticfiles/
 media/
 dbdata/
 backups/
+logs/
 
 ### Django.Python Stack ###
 # Byte-compiled / optimized / DLL files
